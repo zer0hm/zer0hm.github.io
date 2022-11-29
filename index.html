@@ -1,9 +1,111 @@
-<html>
- 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="resources/styles.css">
+    <title>xDark's Cheat Sheet</title>
+</head>
 <body>
-  <h1>Zer0hm</h1>
-  <p>Welcome to my website!</p>
-  <img src="https://content.codecademy.com/articles/github-pages-via-web-app/happy-ice-cream.gif" />
+
+
+    <!-- Navigation -->
+    <nav>
+        <ul>
+            <img id="logo" src="resources/logo.png" alt="">
+            <li><a href="#HTML">HTML Elements</a></li>
+            <li><a href="#CSS">CSS Selectors</a></li>
+            <li><a href="#RES">Learning Resources</a></li>
+        </ul>
+    </nav>
+
+
+<!-- HTML Semantics -->
+    <div class="article" id="HTML">
+        <h1>HTML Semantic Elements</h1>
+
+        <div class="entry">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Element</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="code" >&lthtml&gt</span></td>
+                        <td>Root Element</td>
+                        <td>represents the root (top-level element) of an HTML document. All other elements must be descendants of this element.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="code" >&lthead&gt</span></td>
+                        <td>Head</td>
+                        <td>Contains machine-readable information (metadata) about the document, like its title, scripts, and style sheets.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="code" >&ltbody&gt</span></td>
+                        <td>Body</td>
+                        <td>Represents the content of an HTML document. There can be only one body element in a document.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+<!-- CSS Selectors  -->
+    <div class="article" id="CSS">
+        <h1>CSS Selectors</h1>
+        <div class="entry">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Selector</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="code" >element</span></td>
+                        <td>Select an html element through the element tag.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="code" >.class</span></td>
+                        <td>Select an html element through the class attribute (many elements can share the same class).</td>
+                    </tr>
+                    <tr>
+                        <td><span class="code" >#id</span></td>
+                        <td>Select an html element through the id attribute (only one element per id).</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <!-- Learning Resources -->
+    <div class="article" id="RES">
+        <h1>Learning Resources</h1>
+
+        <div class="entry">
+            <h2><code>HTML</code></h2>
+            <p><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element">Developer Network (MDN) - HTML Elements</a></p>
+            <p><a href="https://www.w3.org/TR/CSS2/selector.html">W3</a></p>
+        </div>
+
+        <div class="entry">
+            <h2><code>CSS</code></h2>
+            <p><a href="https://developer.mozilla.org/en-US/docs/Web/CSS">Developer Network (MDN) - CSS Selectors</a></p>
+            <p><a href="https://css-tricks.com/">CSS-Tricks</a></p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; zer0hm - xDark - 2022.</p>
+    </footer>
 </body>
- 
 </html>
