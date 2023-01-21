@@ -143,6 +143,7 @@ async function startGame(playerChoiceHTML){
 
     const resetButton = document.querySelector('button');
 resetButton.addEventListener('click',function() {
+    isRunning = false;
     playerScore = 0;
     computerScore = 0;
     let result = document.querySelector('.button-container');
