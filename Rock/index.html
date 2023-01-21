@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="resources/style.css">
+    <title>Document</title>
+</head>
+<body>
+
+<h1>Rock Paper Scissors</h1>
+
+<!-- Result Display and Information -->
+
+<div class="result-container">
+    <p>
+        Please Select Rock, Paper or Scissors. 
+    </p> 
+    <p class="result" style="display:none;">
+        You have chosen X, computer chose Y. You Won/Lost!
+    </p>
+</div>
+
+
+<div class="button-container" >
+    <p class="playerScore">
+        Score: 0
+    </p>
+    <button class="reset" style="display:none;">Reset</button>
+    <p class="computerScore">
+        Score: 0
+    </p>
+</div>
+
+
+    <div class="container">
+        <div class="playerSide">
+            <img class="rock" src="resources/Rock.png" alt="">
+            <img class="paper" src="resources/Paper.png" alt="">
+            <img class="scissors" src="resources/Scissors.png" alt="">
+        </div>
+        <div class="computerSide">
+            <div class="computerSelection">
+                <img src="resources/Rock.png" alt="">
+            </div>
+        </div>
+    </div>
+    <script src="resources/main.js"></script>
+</body>
+</html>
