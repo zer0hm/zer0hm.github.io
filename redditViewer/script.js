@@ -14,12 +14,25 @@ const cancelManager = document.getElementById("cancelManager");
 
 let managerSubreddits = [];
 
+const fallbackSubreddits = [
+  "javascript",
+  "webdev",
+  "technology",
+  "programming",
+  "worldnews",
+  "design",
+  "science",
+  "frontend",
+  "aww",
+];
+
 const state = {
   subreddits: [],
   cursorBySubreddit: new Map(),
   nextSubredditIndex: 0,
   loading: false,
   managerUsed: false,
+  seenIds: new Set(),
 };
 
 async function loadSubreddits() {
@@ -31,12 +44,14 @@ async function loadSubreddits() {
       .split(/\r?\n/)
       .map((line) => line.trim())
       .filter((line) => line && !line.startsWith("#"));
-    if (!subs.length) throw new Error("No subreddits found in subreddits.txt");
-    state.subreddits = subs;
+    state.subreddits = subs.length ? subs : fallbackSubreddits;
+    if (!subs.length) subredditListEl.textContent = "Using defaults (update subreddits.txt).";
     renderSubredditList();
   } catch (error) {
-    subredditListEl.textContent = error.message;
-    throw error;
+    console.error(error);
+    state.subreddits = [...fallbackSubreddits];
+    subredditListEl.textContent = "Using default subreddits (could not load subreddits.txt).";
+    renderSubredditList();
   }
 }
 
@@ -64,12 +79,33 @@ function buildCard(data) {
   card.querySelector(".author").textContent = `u/${author}`;
   card.querySelector(".title").textContent = title;
   card.querySelector(".excerpt").textContent = formatExcerpt(data.selftext);
-  const thumbEl = card.querySelector(".thumbnail");
+  const mediaEl = card.querySelector(".media");
+  const videoUrl = getVideoUrl(data);
   const imageUrl = getImage(preview, thumbnail);
-  if (imageUrl) {
-    thumbEl.style.backgroundImage = `url(${imageUrl})`;
+
+  mediaEl.innerHTML = "";
+  mediaEl.classList.remove("placeholder");
+  mediaEl.style.backgroundImage = "";
+  if (videoUrl) {
+    const video = document.createElement("video");
+    video.src = videoUrl;
+    video.controls = true;
+    video.autoplay = false;
+    video.playsInline = true;
+    video.muted = true;
+    video.loop = true;
+    mediaEl.appendChild(video);
+  } else if (imageUrl) {
+    const img = document.createElement("img");
+    img.src = imageUrl;
+    img.alt = title;
+    img.loading = "lazy";
+    img.decoding = "async";
+    mediaEl.appendChild(img);
   } else {
-    thumbEl.classList.add("placeholder");
+    mediaEl.classList.add("placeholder");
+    mediaEl.style.backgroundImage =
+      "linear-gradient(145deg, rgba(255,69,0,0.28), rgba(0,167,255,0.25))";
   }
   card.querySelector(".score-value").textContent = Intl.NumberFormat().format(score);
   card.querySelector(".comments-value").textContent = Intl.NumberFormat().format(num_comments);
@@ -86,6 +122,11 @@ function getImage(preview, thumbnail) {
   return null;
 }
 
+function getVideoUrl(post) {
+  const redditVideo = post?.secure_media?.reddit_video || post?.media?.reddit_video;
+  return redditVideo?.fallback_url || null;
+}
+
 function formatExcerpt(text) {
   if (!text) return "Link post";
   const trimmed = text.replace(/\s+/g, " ").trim();
@@ -98,13 +139,15 @@ async function loadPostsBatch(batchSize = 9) {
   state.loading = true;
   const posts = [];
 
-  for (let i = 0; i < batchSize; i++) {
+  const requestsPerBatch = Math.min(3, state.subreddits.length);
+
+  for (let i = 0; i < requestsPerBatch; i++) {
     const subreddit = pickNextSubreddit();
     if (!subreddit) break;
     const after = state.cursorBySubreddit.get(subreddit) || "";
     try {
       const resp = await fetch(
-        `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/hot.json?limit=9&raw_json=1&after=${after}`
+        `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/hot.json?limit=15&raw_json=1&after=${after}`
       );
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const json = await resp.json();
@@ -113,6 +156,8 @@ async function loadPostsBatch(batchSize = 9) {
       const children = json?.data?.children || [];
       children.forEach(({ data: post }) => {
         if (!post || post.stickied) return;
+        if (state.seenIds.has(post.id)) return;
+        state.seenIds.add(post.id);
         posts.push(post);
       });
     } catch (error) {
@@ -146,6 +191,7 @@ function setupInfiniteScroll() {
 function resetFeed() {
   state.cursorBySubreddit.clear();
   state.nextSubredditIndex = 0;
+  state.seenIds.clear();
   postsGrid.innerHTML = "";
   loadPostsBatch();
 }
@@ -174,6 +220,12 @@ function openManager() {
 
 function closeManagerOverlay() {
   if (managerOverlay) managerOverlay.hidden = true;
+}
+
+function hideManagerButton() {
+  if (manageButton) {
+    manageButton.style.display = "none";
+  }
 }
 
 function populateManager() {
@@ -226,7 +278,10 @@ function handleManagerSubmit(event) {
     .map((el) => el.value)
     .filter(Boolean);
 
-  if (!selected.length) return;
+  if (!selected.length) {
+    closeManagerOverlay();
+    return;
+  }
 
   const unique = Array.from(new Set(selected.map((s) => s.trim()))).filter(Boolean);
   state.subreddits = unique;
@@ -235,9 +290,7 @@ function handleManagerSubmit(event) {
   renderSubredditList();
   resetFeed();
   closeManagerOverlay();
-  if (manageButton && state.managerUsed) {
-    manageButton.style.display = "none";
-  }
+  if (state.managerUsed) hideManagerButton();
 }
 
 async function init() {
