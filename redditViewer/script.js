@@ -135,44 +135,40 @@ function formatExcerpt(text) {
 }
 
 async function loadPostsBatch(batchSize = 9) {
-  if (state.loading || !state.subreddits.length) return 0;
+  if (state.loading || !state.subreddits.length) return;
   state.loading = true;
   const posts = [];
 
   const requestsPerBatch = Math.min(3, state.subreddits.length);
 
-  try {
-    for (let i = 0; i < requestsPerBatch; i++) {
-      const subreddit = pickNextSubreddit();
-      if (!subreddit) break;
-      const after = state.cursorBySubreddit.get(subreddit) || "";
-      try {
-        const resp = await fetch(
-          `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/hot.json?limit=15&raw_json=1&after=${after}`
-        );
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const json = await resp.json();
-        const afterToken = json?.data?.after;
-        if (afterToken) state.cursorBySubreddit.set(subreddit, afterToken);
-        const children = json?.data?.children || [];
-        children.forEach(({ data: post }) => {
-          if (!post || post.stickied) return;
-          if (state.seenIds.has(post.id)) return;
-          state.seenIds.add(post.id);
-          posts.push(post);
-        });
-      } catch (error) {
-        console.error(`Failed to load r/${subreddit}:`, error);
-      }
+  for (let i = 0; i < requestsPerBatch; i++) {
+    const subreddit = pickNextSubreddit();
+    if (!subreddit) break;
+    const after = state.cursorBySubreddit.get(subreddit) || "";
+    try {
+      const resp = await fetch(
+        `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/hot.json?limit=15&raw_json=1&after=${after}`
+      );
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const json = await resp.json();
+      const afterToken = json?.data?.after;
+      if (afterToken) state.cursorBySubreddit.set(subreddit, afterToken);
+      const children = json?.data?.children || [];
+      children.forEach(({ data: post }) => {
+        if (!post || post.stickied) return;
+        if (state.seenIds.has(post.id)) return;
+        state.seenIds.add(post.id);
+        posts.push(post);
+      });
+    } catch (error) {
+      console.error(`Failed to load r/${subreddit}:`, error);
     }
-  } finally {
-    state.loading = false;
   }
 
   const fragment = document.createDocumentFragment();
   posts.forEach((post) => fragment.appendChild(buildCard(post)));
   postsGrid.appendChild(fragment);
-  return posts.length;
+  state.loading = false;
 }
 
 function setupInfiniteScroll() {
@@ -192,12 +188,12 @@ function setupInfiniteScroll() {
   observer.observe(sentinel);
 }
 
-async function resetFeed() {
+function resetFeed() {
   state.cursorBySubreddit.clear();
   state.nextSubredditIndex = 0;
   state.seenIds.clear();
   postsGrid.innerHTML = "";
-  await loadPostsBatch();
+  loadPostsBatch();
 }
 
 function handleShuffle() {
@@ -271,7 +267,7 @@ function addSubredditFromInput() {
   populateManager();
 }
 
-async function handleManagerSubmit(event) {
+function handleManagerSubmit(event) {
   event.preventDefault();
   if (!managerForm) return;
   if (newSubredditInput && newSubredditInput.value.trim()) {
@@ -283,7 +279,7 @@ async function handleManagerSubmit(event) {
     .filter(Boolean);
 
   if (!selected.length) {
-    alert("Please select at least one subreddit to continue.");
+    closeManagerOverlay();
     return;
   }
 
@@ -292,7 +288,7 @@ async function handleManagerSubmit(event) {
   managerSubreddits = unique;
   state.managerUsed = true;
   renderSubredditList();
-  await resetFeed();
+  resetFeed();
   closeManagerOverlay();
   if (state.managerUsed) hideManagerButton();
 }
