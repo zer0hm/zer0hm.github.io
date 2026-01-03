@@ -176,12 +176,6 @@ function closeManagerOverlay() {
   if (managerOverlay) managerOverlay.hidden = true;
 }
 
-function hideManagerButton() {
-  if (manageButton) {
-    manageButton.style.display = "none";
-  }
-}
-
 function populateManager() {
   if (!subredditCheckboxes) return;
   subredditCheckboxes.innerHTML = "";
@@ -232,10 +226,7 @@ function handleManagerSubmit(event) {
     .map((el) => el.value)
     .filter(Boolean);
 
-  if (!selected.length) {
-    closeManagerOverlay();
-    return;
-  }
+  if (!selected.length) return;
 
   const unique = Array.from(new Set(selected.map((s) => s.trim()))).filter(Boolean);
   state.subreddits = unique;
@@ -244,7 +235,9 @@ function handleManagerSubmit(event) {
   renderSubredditList();
   resetFeed();
   closeManagerOverlay();
-  if (state.managerUsed) hideManagerButton();
+  if (manageButton && state.managerUsed) {
+    manageButton.style.display = "none";
+  }
 }
 
 async function init() {

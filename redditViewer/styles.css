@@ -233,10 +233,6 @@ main {
   z-index: 30;
 }
 
-.overlay[hidden] {
-  display: none !important;
-}
-
 .overlay-backdrop {
   position: absolute;
   inset: 0;
