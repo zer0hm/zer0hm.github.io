@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reddit Viewer</title>
+  <link rel="preconnect" href="https://www.reddit.com" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="branding">
+      <div class="logo" aria-hidden="true">r/</div>
+      <div>
+        <p class="eyebrow">Curated subreddits</p>
+        <h1>Reddit Viewer</h1>
+      </div>
+    </div>
+    <p class="lede">
+      Browse a rotating feed of posts from a text file of subreddits. Swipe through
+      one post at a time on mobile or enjoy a 3x3 gallery grid on larger screens.
+    </p>
+  </header>
+
+  <main>
+    <section class="controls" aria-live="polite">
+      <div class="subreddit-source">
+        <strong>Loading subreddits…</strong>
+        <span class="subreddit-list" id="subredditList" aria-live="polite"></span>
+      </div>
+      <div class="control-buttons">
+        <button id="manageButton" class="pill secondary">Choose subreddits</button>
+        <button id="refreshButton" class="pill">Shuffle feed</button>
+      </div>
+    </section>
+
+    <section id="postsGrid" class="posts-grid" aria-live="polite"></section>
+    <div id="sentinel" class="sentinel" aria-hidden="true"></div>
+  </main>
+
+  <div id="managerOverlay" class="overlay" hidden>
+    <div class="overlay-backdrop"></div>
+    <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="managerTitle">
+      <div class="overlay-header">
+        <div>
+          <p class="eyebrow">Customize feed</p>
+          <h2 id="managerTitle">Choose your subreddits</h2>
+        </div>
+        <button id="closeManager" class="icon-button" aria-label="Close manager">✕</button>
+      </div>
+      <form id="managerForm" class="manager-form">
+        <div class="input-row">
+          <label for="newSubreddit">Add subreddit</label>
+          <div class="add-row">
+            <input id="newSubreddit" name="newSubreddit" type="text" placeholder="e.g. cats" autocomplete="off" />
+            <button type="button" id="addSubreddit" class="pill small">Add</button>
+          </div>
+        </div>
+        <div class="checkbox-grid" id="subredditCheckboxes" aria-live="polite"></div>
+        <div class="overlay-actions">
+          <button type="button" id="cancelManager" class="pill secondary">Cancel</button>
+          <button type="submit" class="pill">Save selection</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <template id="postCardTemplate">
+    <article class="post-card">
+      <div class="post-meta">
+        <span class="pill subreddit"></span>
+        <span class="separator" aria-hidden="true">•</span>
+        <span class="author"></span>
+      </div>
+      <h2 class="title"></h2>
+      <p class="excerpt"></p>
+      <div class="media" role="presentation"></div>
+      <div class="post-stats">
+        <span class="score" aria-label="Score">⬆️ <span class="score-value"></span></span>
+        <span class="comments" aria-label="Comments">💬 <span class="comments-value"></span></span>
+      </div>
+      <a class="external" target="_blank" rel="noopener noreferrer">Open on Reddit</a>
+    </article>
+  </template>
+
+  <script src="script.js" type="module"></script>
+</body>
+</html>
