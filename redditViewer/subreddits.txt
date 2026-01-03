@@ -1,0 +1,10 @@
+# Add one subreddit name per line
+javascript
+webdev
+technology
+programming
+worldnews
+design
+science
+frontend
+aww
