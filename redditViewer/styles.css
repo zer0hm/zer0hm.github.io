@@ -162,7 +162,6 @@ main {
   box-shadow: var(--shadow);
   display: grid;
   gap: 10px;
-  grid-template-rows: auto auto 1fr auto auto;
   scroll-snap-align: start;
   min-height: 80vh;
 }
@@ -191,24 +190,14 @@ main {
   line-height: 1.5;
 }
 
-.media {
+.thumbnail {
   width: 100%;
   border-radius: 14px;
-  min-height: 360px;
-  height: 100%;
+  min-height: 180px;
   background: linear-gradient(145deg, rgba(255, 69, 0, 0.28), rgba(0, 167, 255, 0.25));
   background-size: cover;
   background-position: center;
   border: 1px solid var(--border);
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-}
-
-.media video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .post-stats {
@@ -242,10 +231,6 @@ main {
   display: grid;
   place-items: center;
   z-index: 30;
-}
-
-.overlay[hidden] {
-  display: none !important;
 }
 
 .overlay-backdrop {
@@ -349,7 +334,7 @@ input[type="text"] {
   }
 
   .post-card {
-    min-height: 480px;
+    min-height: auto;
   }
 }
 

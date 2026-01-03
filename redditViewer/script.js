@@ -64,24 +64,12 @@ function buildCard(data) {
   card.querySelector(".author").textContent = `u/${author}`;
   card.querySelector(".title").textContent = title;
   card.querySelector(".excerpt").textContent = formatExcerpt(data.selftext);
-  const mediaEl = card.querySelector(".media");
-  const videoUrl = getVideoUrl(data);
+  const thumbEl = card.querySelector(".thumbnail");
   const imageUrl = getImage(preview, thumbnail);
-
-  mediaEl.innerHTML = "";
-  if (videoUrl) {
-    const video = document.createElement("video");
-    video.src = videoUrl;
-    video.controls = true;
-    video.autoplay = false;
-    video.playsInline = true;
-    video.muted = true;
-    video.loop = true;
-    mediaEl.appendChild(video);
-  } else if (imageUrl) {
-    mediaEl.style.backgroundImage = `url(${imageUrl})`;
+  if (imageUrl) {
+    thumbEl.style.backgroundImage = `url(${imageUrl})`;
   } else {
-    mediaEl.classList.add("placeholder");
+    thumbEl.classList.add("placeholder");
   }
   card.querySelector(".score-value").textContent = Intl.NumberFormat().format(score);
   card.querySelector(".comments-value").textContent = Intl.NumberFormat().format(num_comments);
@@ -96,11 +84,6 @@ function getImage(preview, thumbnail) {
   if (previewImage && previewImage.startsWith("http")) return previewImage;
   if (thumbnail && thumbnail.startsWith("http")) return thumbnail;
   return null;
-}
-
-function getVideoUrl(post) {
-  const redditVideo = post?.secure_media?.reddit_video || post?.media?.reddit_video;
-  return redditVideo?.fallback_url || null;
 }
 
 function formatExcerpt(text) {
@@ -193,12 +176,6 @@ function closeManagerOverlay() {
   if (managerOverlay) managerOverlay.hidden = true;
 }
 
-function hideManagerButton() {
-  if (manageButton) {
-    manageButton.style.display = "none";
-  }
-}
-
 function populateManager() {
   if (!subredditCheckboxes) return;
   subredditCheckboxes.innerHTML = "";
@@ -249,10 +226,7 @@ function handleManagerSubmit(event) {
     .map((el) => el.value)
     .filter(Boolean);
 
-  if (!selected.length) {
-    closeManagerOverlay();
-    return;
-  }
+  if (!selected.length) return;
 
   const unique = Array.from(new Set(selected.map((s) => s.trim()))).filter(Boolean);
   state.subreddits = unique;
@@ -261,7 +235,9 @@ function handleManagerSubmit(event) {
   renderSubredditList();
   resetFeed();
   closeManagerOverlay();
-  if (state.managerUsed) hideManagerButton();
+  if (manageButton && state.managerUsed) {
+    manageButton.style.display = "none";
+  }
 }
 
 async function init() {
