@@ -19,14 +19,21 @@
       --panel: #f8efe7;
       --panel-border: #412635;
       --pixel: 4px;
-      --heart-pixel: 5px;
-      font-family: "Courier New", monospace;
+      --heart-pixel: 7px;
+      font-family: "Press Start 2P", "Pixelify Sans", "VT323", "Courier New", monospace;
       text-transform: uppercase;
+    }
+
+    @font-face {
+      font-family: "Press Start 2P";
+      src: local("Press Start 2P"), local("PressStart2P-Regular");
     }
 
     * {
       box-sizing: border-box;
       image-rendering: pixelated;
+      -webkit-font-smoothing: none;
+      font-smooth: never;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       touch-action: manipulation;
@@ -55,6 +62,8 @@
       border: var(--pixel) solid var(--panel-border);
       box-shadow: inset 0 0 0 calc(var(--pixel) * 2) #f8e3e9;
       padding: var(--pixel);
+      transform: scale(1.04);
+      transform-origin: center;
     }
 
     .game-screen::before,
@@ -160,7 +169,7 @@
 
     .playfield {
       position: absolute;
-      top: calc(env(safe-area-inset-top) + 72px);
+      top: calc(env(safe-area-inset-top) + 68px);
       left: 0;
       right: 0;
       bottom: 0;
@@ -181,8 +190,8 @@
 
     .heart-button {
       position: absolute;
-      width: 136px;
-      height: 136px;
+      width: 192px;
+      height: 192px;
       border: none;
       background: transparent;
       cursor: pointer;
@@ -192,65 +201,108 @@
       animation: float 2.4s steps(6) infinite;
     }
 
-    .heart-button::before {
-      content: "";
-      width: calc(var(--heart-pixel) * 4);
-      height: calc(var(--heart-pixel) * 4);
-      background: var(--rose);
-      box-shadow:
-        calc(var(--heart-pixel) * 4) 0 var(--rose),
-        calc(var(--heart-pixel) * 8) 0 var(--rose),
-        calc(var(--heart-pixel) * 12) 0 var(--rose),
-        calc(var(--heart-pixel) * 16) 0 var(--rose),
-        calc(var(--heart-pixel) * 20) 0 var(--rose),
-        0 calc(var(--heart-pixel) * 4) var(--rose),
-        calc(var(--heart-pixel) * 4) calc(var(--heart-pixel) * 4) var(--rose),
-        calc(var(--heart-pixel) * 8) calc(var(--heart-pixel) * 4) var(--rose),
-        calc(var(--heart-pixel) * 12) calc(var(--heart-pixel) * 4) var(--rose),
-        calc(var(--heart-pixel) * 16) calc(var(--heart-pixel) * 4) var(--rose),
-        calc(var(--heart-pixel) * 20) calc(var(--heart-pixel) * 4) var(--rose),
-        0 calc(var(--heart-pixel) * 8) var(--rose),
-        calc(var(--heart-pixel) * 4) calc(var(--heart-pixel) * 8) var(--rose),
-        calc(var(--heart-pixel) * 8) calc(var(--heart-pixel) * 8) var(--rose),
-        calc(var(--heart-pixel) * 12) calc(var(--heart-pixel) * 8) var(--rose),
-        calc(var(--heart-pixel) * 16) calc(var(--heart-pixel) * 8) var(--rose),
-        calc(var(--heart-pixel) * 20) calc(var(--heart-pixel) * 8) var(--rose),
-        calc(var(--heart-pixel) * 4) calc(var(--heart-pixel) * 12) var(--rose),
-        calc(var(--heart-pixel) * 8) calc(var(--heart-pixel) * 12) var(--rose),
-        calc(var(--heart-pixel) * 12) calc(var(--heart-pixel) * 12) var(--rose),
-        calc(var(--heart-pixel) * 16) calc(var(--heart-pixel) * 12) var(--rose),
-        calc(var(--heart-pixel) * 8) calc(var(--heart-pixel) * 16) var(--rose),
-        calc(var(--heart-pixel) * 12) calc(var(--heart-pixel) * 16) var(--rose);
-    }
-
+    .heart-button::before,
     .heart-button::after {
       content: "";
       position: absolute;
       width: calc(var(--heart-pixel) * 4);
       height: calc(var(--heart-pixel) * 4);
-      background: var(--rose-soft);
-      box-shadow:
-        calc(var(--heart-pixel) * 4) 0 var(--rose-soft),
-        calc(var(--heart-pixel) * 8) 0 var(--rose-soft),
-        calc(var(--heart-pixel) * 4) calc(var(--heart-pixel) * 4) var(--rose-soft),
-        calc(var(--heart-pixel) * 8) calc(var(--heart-pixel) * 4) var(--rose-soft),
-        calc(var(--heart-pixel) * 8) calc(var(--heart-pixel) * 8) var(--rose-soft);
-      transform: translate(calc(var(--heart-pixel) * 4), calc(var(--heart-pixel) * 4));
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
     }
 
-    .heart-button span {
-      position: absolute;
-      width: calc(var(--heart-pixel) * 4);
-      height: calc(var(--heart-pixel) * 4);
-      background: #a63a5a;
-      box-shadow:
-        calc(var(--heart-pixel) * 4) 0 #a63a5a,
-        calc(var(--heart-pixel) * 8) 0 #a63a5a,
-        0 calc(var(--heart-pixel) * 4) #a63a5a,
-        calc(var(--heart-pixel) * 4) calc(var(--heart-pixel) * 4) #a63a5a;
-      transform: translate(calc(var(--heart-pixel) * 8), calc(var(--heart-pixel) * 12));
-      opacity: 0.8;
-    }
+.heart-button::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:var(--heart-pixel);
+  height:var(--heart-pixel);
+  transform:translate(-50%,-50%);
+  background:#e06666;
+  box-shadow:
+    /* Row 0 (y=-4) */
+    calc(var(--heart-pixel) * -2) calc(var(--heart-pixel) * -4) #e06666,
+    calc(var(--heart-pixel) * -1) calc(var(--heart-pixel) * -4) #e06666,
+    calc(var(--heart-pixel) *  1) calc(var(--heart-pixel) * -4) #e06666,
+    calc(var(--heart-pixel) *  2) calc(var(--heart-pixel) * -4) #e06666,
+
+    /* Row 1 (y=-3) */
+    calc(var(--heart-pixel) * -3) calc(var(--heart-pixel) * -3) #e06666,
+    calc(var(--heart-pixel) * -2) calc(var(--heart-pixel) * -3) #e06666,
+    calc(var(--heart-pixel) * -1) calc(var(--heart-pixel) * -3) #e06666,
+    calc(var(--heart-pixel) *  0) calc(var(--heart-pixel) * -3) #e06666,
+    calc(var(--heart-pixel) *  1) calc(var(--heart-pixel) * -3) #e06666,
+    calc(var(--heart-pixel) *  2) calc(var(--heart-pixel) * -3) #e06666,
+    calc(var(--heart-pixel) *  3) calc(var(--heart-pixel) * -3) #e06666,
+
+    /* Row 2 (y=-2) */
+    calc(var(--heart-pixel) * -4) calc(var(--heart-pixel) * -2) #e06666,
+    calc(var(--heart-pixel) * -3) calc(var(--heart-pixel) * -2) #e06666,
+    calc(var(--heart-pixel) * -2) calc(var(--heart-pixel) * -2) #e06666,
+    calc(var(--heart-pixel) * -1) calc(var(--heart-pixel) * -2) #e06666,
+    calc(var(--heart-pixel) *  0) calc(var(--heart-pixel) * -2) #e06666,
+    calc(var(--heart-pixel) *  1) calc(var(--heart-pixel) * -2) #e06666,
+    calc(var(--heart-pixel) *  2) calc(var(--heart-pixel) * -2) #e06666,
+    calc(var(--heart-pixel) *  3) calc(var(--heart-pixel) * -2) #e06666,
+    calc(var(--heart-pixel) *  4) calc(var(--heart-pixel) * -2) #e06666,
+
+    /* Row 3 (y=-1) */
+    calc(var(--heart-pixel) * -4) calc(var(--heart-pixel) * -1) #e06666,
+    calc(var(--heart-pixel) * -3) calc(var(--heart-pixel) * -1) #e06666,
+    calc(var(--heart-pixel) * -2) calc(var(--heart-pixel) * -1) #e06666,
+    calc(var(--heart-pixel) * -1) calc(var(--heart-pixel) * -1) #e06666,
+    calc(var(--heart-pixel) *  0) calc(var(--heart-pixel) * -1) #e06666,
+    calc(var(--heart-pixel) *  1) calc(var(--heart-pixel) * -1) #e06666,
+    calc(var(--heart-pixel) *  2) calc(var(--heart-pixel) * -1) #e06666,
+    calc(var(--heart-pixel) *  3) calc(var(--heart-pixel) * -1) #e06666,
+    calc(var(--heart-pixel) *  4) calc(var(--heart-pixel) * -1) #e06666,
+
+    /* Row 4 (y=0) */
+    calc(var(--heart-pixel) * -3) calc(var(--heart-pixel) *  0) #e06666,
+    calc(var(--heart-pixel) * -2) calc(var(--heart-pixel) *  0) #e06666,
+    calc(var(--heart-pixel) * -1) calc(var(--heart-pixel) *  0) #e06666,
+    calc(var(--heart-pixel) *  0) calc(var(--heart-pixel) *  0) #e06666,
+    calc(var(--heart-pixel) *  1) calc(var(--heart-pixel) *  0) #e06666,
+    calc(var(--heart-pixel) *  2) calc(var(--heart-pixel) *  0) #e06666,
+    calc(var(--heart-pixel) *  3) calc(var(--heart-pixel) *  0) #e06666,
+
+    /* Row 5 (y=1) */
+    calc(var(--heart-pixel) * -2) calc(var(--heart-pixel) *  1) #e06666,
+    calc(var(--heart-pixel) * -1) calc(var(--heart-pixel) *  1) #e06666,
+    calc(var(--heart-pixel) *  0) calc(var(--heart-pixel) *  1) #e06666,
+    calc(var(--heart-pixel) *  1) calc(var(--heart-pixel) *  1) #e06666,
+    calc(var(--heart-pixel) *  2) calc(var(--heart-pixel) *  1) #e06666,
+
+    /* Row 6 (y=2) */
+    calc(var(--heart-pixel) * -1) calc(var(--heart-pixel) *  2) #e06666,
+    calc(var(--heart-pixel) *  0) calc(var(--heart-pixel) *  2) #e06666,
+    calc(var(--heart-pixel) *  1) calc(var(--heart-pixel) *  2) #e06666,
+
+    /* Row 7 (y=3) */
+    calc(var(--heart-pixel) *  0) calc(var(--heart-pixel) *  3) #e06666;
+
+  opacity:0.55;
+}
+
+.heart-button::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:var(--heart-pixel);
+  height:var(--heart-pixel);
+  transform:translate(-50%,-50%);
+  background:rgba(255,255,255,0.0);
+  box-shadow:
+    calc(var(--heart-pixel) * -2) calc(var(--heart-pixel) * -3) rgba(255,255,255,0.22),
+    calc(var(--heart-pixel) * -1) calc(var(--heart-pixel) * -3) rgba(255,255,255,0.22),
+    calc(var(--heart-pixel) * -3) calc(var(--heart-pixel) * -2) rgba(255,255,255,0.18),
+    calc(var(--heart-pixel) * -2) calc(var(--heart-pixel) * -2) rgba(255,255,255,0.18);
+  pointer-events:none;
+}
+
 
     .heart-button.pop {
       animation: pop 0.35s steps(4) forwards;
@@ -289,7 +341,7 @@
       left: 50%;
       top: 45%;
       transform: translate(-50%, -50%);
-      min-width: min(90vw, 320px);
+      min-width: min(94vw, 360px);
       background: var(--panel);
       border: var(--pixel) solid var(--panel-border);
       box-shadow: inset 0 0 0 var(--pixel) #e4cfd8;
@@ -325,12 +377,12 @@
 
     .dialog h2 {
       margin: 0 0 calc(var(--pixel) * 2);
-      font-size: 12px;
+      font-size: 18px;
     }
 
     .dialog p {
       margin: 0 0 calc(var(--pixel) * 3);
-      font-size: 10px;
+      font-size: 14px;
       line-height: 1.6;
       background: #f3dfe5;
       border: var(--pixel) solid var(--panel-border);
@@ -342,7 +394,7 @@
       border: var(--pixel) solid var(--panel-border);
       background: var(--rose-soft);
       padding: calc(var(--pixel) * 2);
-      font-size: 11px;
+      font-size: 15px;
       cursor: pointer;
     }
 
@@ -397,7 +449,7 @@
       display: grid;
       place-items: center;
       text-align: center;
-      font-size: 18px;
+      font-size: 26px;
       opacity: 0;
       pointer-events: none;
     }
@@ -423,11 +475,11 @@
     .spam-toast {
       background: var(--panel);
       border: var(--pixel) solid var(--panel-border);
-      padding: calc(var(--pixel) * 2);
-      font-size: 9px;
+      padding: calc(var(--pixel) * 3);
+      font-size: 14px;
       opacity: 0;
       animation: toast 1.1s steps(4) forwards;
-      max-width: 240px;
+      max-width: 340px;
       box-shadow: inset 0 0 0 var(--pixel) #e4cfd8;
     }
 
@@ -479,7 +531,7 @@
     .calm-line {
       opacity: 0;
       transition: opacity 0.6s steps(3);
-      font-size: 14px;
+      font-size: 22px;
     }
 
     .calm-line.show {
@@ -489,14 +541,14 @@
     .victory-screen h2,
     .ask-screen h2,
     .end-screen h2 {
-      font-size: 14px;
+      font-size: 33px;
       margin: 0;
     }
 
     .victory-screen p,
     .ask-screen p,
     .end-screen p {
-      font-size: 10px;
+      font-size: 22px;
       margin: 0;
       line-height: 1.6;
       max-width: 260px;
@@ -541,7 +593,7 @@
       background: var(--panel);
       padding: calc(var(--pixel) * 3);
       width: min(90%, 260px);
-      font-size: 10px;
+      font-size: 28px;
       text-align: left;
     }
 
@@ -702,7 +754,7 @@
         <div class="confetti" id="confetti"></div>
         <h2>GAME COMPLETED</h2>
         <p>You collected every heart.</p>
-        <p>There were never going to be enough.</p>
+        <p>And I still want to give you more</p>
         <button class="pixel-button" id="continueBtn">CONTINUE</button>
       </div>
 
@@ -753,7 +805,6 @@
     const noTooltip = document.getElementById('noTooltip');
     const endScreen = document.getElementById('endScreen');
     const hud = document.getElementById('hud');
-
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const STATES = {
@@ -776,7 +827,7 @@
     let audioEnabled = true;
     let audioContext = null;
     let audioSuppressed = false;
-
+	ensureAudio();
     const popupMessages = [
       'You collected a heart.',
       'I think that one was already yours.',
@@ -858,13 +909,14 @@
       const button = document.createElement('button');
       button.className = 'heart-button';
       button.setAttribute('aria-label', 'Collect heart');
-      const heartShade = document.createElement('span');
-      button.appendChild(heartShade);
+      const heartHighlight = document.createElement('span');
+      heartHighlight.className = 'heart-highlight';
+      button.appendChild(heartHighlight);
 
       const padding = 40;
       const rect = playfield.getBoundingClientRect();
-      const maxX = rect.width - padding - 136;
-      const maxY = rect.height - padding - 136;
+      const maxX = rect.width - padding - 192;
+      const maxY = rect.height - padding - 192;
       const x = padding + Math.random() * Math.max(1, maxX - padding);
       const y = padding + Math.random() * Math.max(1, maxY - padding);
       button.style.left = `${Math.round(x)}px`;
@@ -887,8 +939,8 @@
       target.classList.add('pop');
       const burst = document.createElement('div');
       burst.className = 'pixel-burst';
-      burst.style.left = `${target.offsetLeft + 62}px`;
-      burst.style.top = `${target.offsetTop + 62}px`;
+      burst.style.left = `${target.offsetLeft + 90}px`;
+      burst.style.top = `${target.offsetTop + 90}px`;
       playfield.appendChild(burst);
       burst.addEventListener('animationend', () => burst.remove());
       target.addEventListener('animationend', () => target.remove());
