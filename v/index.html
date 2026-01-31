@@ -6,344 +6,210 @@
   <title>HEART OVERFLOW</title>
   <style>
     :root {
-      color-scheme: light;
-      --cream: #f7e9dd;
-      --blush: #f3c7d3;
-      --plum: #3b2234;
-      --plum-dark: #251626;
-      --rose: #d64f74;
-      --rose-soft: #e7a6be;
-      --lavender: #c7a8d8;
-      --gold: #f5d06f;
-      --text: #3a231e;
-      --panel: #f8efe7;
-      --panel-border: #412635;
-      --pixel: 4px;
-      --heart-pixel: 5px;
-      font-family: "Courier New", monospace;
-      text-transform: uppercase;
+      color-scheme: dark;
+      --bg: #0b0b10;
+      --frame: #1b1b25;
+      --frame-border: #f26ca7;
+      --accent: #ff5fa2;
+      --accent-soft: #ffb3d1;
+      --text: #f7f0f5;
+      --muted: #a3a0b3;
+      --ok: #6cf2d9;
+      font-family: "Press Start 2P", system-ui, -apple-system, sans-serif;
     }
 
     * {
       box-sizing: border-box;
-      image-rendering: pixelated;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       touch-action: manipulation;
     }
 
-    html,
     body {
       margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: linear-gradient(180deg, var(--cream) 0%, var(--blush) 100%);
+      background: radial-gradient(circle at top, #1c1126, #08060e 60%);
       color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+        env(safe-area-inset-bottom) env(safe-area-inset-left);
+      overflow: hidden;
     }
 
-    body {
-      display: flex;
-    }
-
-    .game-screen {
+    .game-shell {
+      width: min(92vw, 420px);
+      background: var(--frame);
+      border: 3px solid var(--frame-border);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
       position: relative;
-      width: 100vw;
-      height: 100svh;
-      background: linear-gradient(180deg, #f9f2ec 0%, #f5d6df 100%);
-      border: var(--pixel) solid var(--panel-border);
-      box-shadow: inset 0 0 0 calc(var(--pixel) * 2) #f8e3e9;
-      padding: var(--pixel);
-    }
-
-    .game-screen::before,
-    .game-screen::after {
-      content: "";
-      position: absolute;
-      width: calc(var(--pixel) * 3);
-      height: calc(var(--pixel) * 3);
-      background: var(--panel-border);
-    }
-
-    .game-screen::before {
-      top: 0;
-      left: 0;
-    }
-
-    .game-screen::after {
-      top: 0;
-      right: 0;
-    }
-
-    .corner-bottom {
-      position: absolute;
-      bottom: 0;
-      width: calc(var(--pixel) * 3);
-      height: calc(var(--pixel) * 3);
-      background: var(--panel-border);
-    }
-
-    .corner-bottom.left {
-      left: 0;
-    }
-
-    .corner-bottom.right {
-      right: 0;
     }
 
     .hud {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      padding: calc(env(safe-area-inset-top) + var(--pixel) * 3)
-        calc(env(safe-area-inset-right) + var(--pixel) * 3)
-        calc(var(--pixel) * 2)
-        calc(env(safe-area-inset-left) + var(--pixel) * 3);
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      grid-template-rows: auto auto;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
       align-items: center;
-      gap: calc(var(--pixel) * 2);
-      background: var(--panel);
-      border-bottom: var(--pixel) solid var(--panel-border);
-      box-shadow: inset 0 calc(var(--pixel) * -1) 0 #d7b8c3;
       font-size: 12px;
+      text-transform: uppercase;
       letter-spacing: 1px;
+      margin-bottom: 10px;
     }
 
     .hud-title {
-      text-align: center;
-      font-size: 13px;
-    }
-
-    .hud-right {
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .love-bar {
       grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: calc(var(--pixel) * 1.5);
-      padding: calc(var(--pixel) * 1.5);
-      background: #f2d9df;
-      border: var(--pixel) solid var(--panel-border);
-      box-shadow: inset 0 0 0 var(--pixel) #f8efe7;
+      text-align: center;
+      font-size: 14px;
+      margin-top: 6px;
+      color: var(--accent-soft);
     }
 
-    .love-bar span {
-      height: calc(var(--pixel) * 3);
-      background: #e7c2cf;
-      border: var(--pixel) solid #d0a9b8;
-    }
-
-    .love-bar span.active {
-      background: var(--rose);
-      border-color: var(--panel-border);
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .audio-toggle {
-      border: var(--pixel) solid var(--panel-border);
-      background: var(--panel);
-      padding: calc(var(--pixel) * 1.5) calc(var(--pixel) * 2);
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      background: transparent;
+      padding: 6px 10px;
+      border-radius: 10px;
       font-size: 10px;
       cursor: pointer;
-      color: var(--text);
     }
 
-    .audio-toggle.off {
-      opacity: 0.6;
+    .audio-toggle.active {
+      background: var(--accent);
+      color: #14060c;
     }
 
-    .playfield {
-      position: absolute;
-      top: calc(env(safe-area-inset-top) + 72px);
-      left: 0;
-      right: 0;
-      bottom: 0;
-      padding: calc(var(--pixel) * 4) calc(var(--pixel) * 3)
-        calc(env(safe-area-inset-bottom) + var(--pixel) * 6)
-        calc(var(--pixel) * 3);
+    .play-area {
+      position: relative;
+      height: 360px;
+      border-radius: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(180deg, rgba(255, 95, 162, 0.1), transparent);
       overflow: hidden;
     }
 
-    .playfield::before {
-      content: "";
+    .pixel-heart {
       position: absolute;
-      inset: calc(var(--pixel) * 2);
-      border: var(--pixel) solid #b78e9e;
-      box-shadow: inset 0 0 0 var(--pixel) #f3dde4;
-      pointer-events: none;
-    }
-
-    .heart-button {
-      position: absolute;
-      width: 136px;
-      height: 136px;
+      width: 72px;
+      height: 72px;
       border: none;
       background: transparent;
       cursor: pointer;
       display: grid;
       place-items: center;
-      transform: translateZ(0);
-      animation: float 2.4s steps(6) infinite;
+      animation: float 2.8s ease-in-out infinite;
     }
 
-    .heart-button::before {
+    .pixel-heart::before {
       content: "";
-      width: calc(var(--heart-pixel) * 4);
-      height: calc(var(--heart-pixel) * 4);
-      background: var(--rose);
+      width: 18px;
+      height: 18px;
+      background: var(--accent);
       box-shadow:
-        calc(var(--heart-pixel) * 4) 0 var(--rose),
-        calc(var(--heart-pixel) * 8) 0 var(--rose),
-        calc(var(--heart-pixel) * 12) 0 var(--rose),
-        calc(var(--heart-pixel) * 16) 0 var(--rose),
-        calc(var(--heart-pixel) * 20) 0 var(--rose),
-        0 calc(var(--heart-pixel) * 4) var(--rose),
-        calc(var(--heart-pixel) * 4) calc(var(--heart-pixel) * 4) var(--rose),
-        calc(var(--heart-pixel) * 8) calc(var(--heart-pixel) * 4) var(--rose),
-        calc(var(--heart-pixel) * 12) calc(var(--heart-pixel) * 4) var(--rose),
-        calc(var(--heart-pixel) * 16) calc(var(--heart-pixel) * 4) var(--rose),
-        calc(var(--heart-pixel) * 20) calc(var(--heart-pixel) * 4) var(--rose),
-        0 calc(var(--heart-pixel) * 8) var(--rose),
-        calc(var(--heart-pixel) * 4) calc(var(--heart-pixel) * 8) var(--rose),
-        calc(var(--heart-pixel) * 8) calc(var(--heart-pixel) * 8) var(--rose),
-        calc(var(--heart-pixel) * 12) calc(var(--heart-pixel) * 8) var(--rose),
-        calc(var(--heart-pixel) * 16) calc(var(--heart-pixel) * 8) var(--rose),
-        calc(var(--heart-pixel) * 20) calc(var(--heart-pixel) * 8) var(--rose),
-        calc(var(--heart-pixel) * 4) calc(var(--heart-pixel) * 12) var(--rose),
-        calc(var(--heart-pixel) * 8) calc(var(--heart-pixel) * 12) var(--rose),
-        calc(var(--heart-pixel) * 12) calc(var(--heart-pixel) * 12) var(--rose),
-        calc(var(--heart-pixel) * 16) calc(var(--heart-pixel) * 12) var(--rose),
-        calc(var(--heart-pixel) * 8) calc(var(--heart-pixel) * 16) var(--rose),
-        calc(var(--heart-pixel) * 12) calc(var(--heart-pixel) * 16) var(--rose);
+        18px 0 var(--accent),
+        36px 0 var(--accent),
+        54px 0 var(--accent),
+        0 18px var(--accent),
+        18px 18px var(--accent),
+        36px 18px var(--accent),
+        54px 18px var(--accent),
+        0 36px var(--accent),
+        18px 36px var(--accent),
+        36px 36px var(--accent),
+        18px 54px var(--accent),
+        36px 54px var(--accent);
     }
 
-    .heart-button::after {
-      content: "";
-      position: absolute;
-      width: calc(var(--heart-pixel) * 4);
-      height: calc(var(--heart-pixel) * 4);
-      background: var(--rose-soft);
-      box-shadow:
-        calc(var(--heart-pixel) * 4) 0 var(--rose-soft),
-        calc(var(--heart-pixel) * 8) 0 var(--rose-soft),
-        calc(var(--heart-pixel) * 4) calc(var(--heart-pixel) * 4) var(--rose-soft),
-        calc(var(--heart-pixel) * 8) calc(var(--heart-pixel) * 4) var(--rose-soft),
-        calc(var(--heart-pixel) * 8) calc(var(--heart-pixel) * 8) var(--rose-soft);
-      transform: translate(calc(var(--heart-pixel) * 4), calc(var(--heart-pixel) * 4));
+    .pixel-heart.pop {
+      animation: pop 0.3s ease-out forwards;
     }
 
-    .heart-button span {
-      position: absolute;
-      width: calc(var(--heart-pixel) * 4);
-      height: calc(var(--heart-pixel) * 4);
-      background: #a63a5a;
-      box-shadow:
-        calc(var(--heart-pixel) * 4) 0 #a63a5a,
-        calc(var(--heart-pixel) * 8) 0 #a63a5a,
-        0 calc(var(--heart-pixel) * 4) #a63a5a,
-        calc(var(--heart-pixel) * 4) calc(var(--heart-pixel) * 4) #a63a5a;
-      transform: translate(calc(var(--heart-pixel) * 8), calc(var(--heart-pixel) * 12));
-      opacity: 0.8;
-    }
-
-    .heart-button.pop {
-      animation: pop 0.35s steps(4) forwards;
-    }
-
-    .pixel-burst {
-      position: absolute;
-      width: calc(var(--pixel) * 2);
-      height: calc(var(--pixel) * 2);
-      background: var(--gold);
-      box-shadow:
-        calc(var(--pixel) * 4) 0 var(--lavender),
-        calc(var(--pixel) * -4) 0 var(--rose-soft),
-        0 calc(var(--pixel) * 4) var(--lavender),
-        0 calc(var(--pixel) * -4) var(--rose-soft);
-      animation: burst 0.35s steps(3) forwards;
-      pointer-events: none;
-    }
-
-    .overlay {
+    .modal-backdrop {
       position: absolute;
       inset: 0;
-      background: rgba(56, 33, 46, 0.28);
+      background: rgba(8, 6, 14, 0.72);
+      display: grid;
+      place-items: center;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s steps(3);
+      transition: opacity 0.2s ease;
     }
 
-    .overlay.active {
+    .modal-backdrop.active {
       opacity: 1;
       pointer-events: auto;
     }
 
-    .dialog {
-      position: absolute;
-      left: 50%;
-      top: 45%;
-      transform: translate(-50%, -50%);
-      min-width: min(90vw, 320px);
-      background: var(--panel);
-      border: var(--pixel) solid var(--panel-border);
-      box-shadow: inset 0 0 0 var(--pixel) #e4cfd8;
-      padding: calc(var(--pixel) * 4);
-      opacity: 0;
-      pointer-events: none;
+    .modal {
+      background: #14121c;
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 18px;
+      text-align: center;
+      width: min(80%, 280px);
+      box-shadow: 0 0 18px rgba(255, 95, 162, 0.3);
     }
 
-    .dialog::before,
-    .dialog::after {
-      content: "";
-      position: absolute;
-      width: calc(var(--pixel) * 2);
-      height: calc(var(--pixel) * 2);
-      background: var(--panel-border);
+    .modal h2 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: var(--accent-soft);
     }
 
-    .dialog::before {
-      top: 0;
-      left: 0;
-    }
-
-    .dialog::after {
-      top: 0;
-      right: 0;
-    }
-
-    .dialog.active {
-      opacity: 1;
-      pointer-events: auto;
-      animation: dialog-in 0.3s steps(4) forwards;
-    }
-
-    .dialog h2 {
-      margin: 0 0 calc(var(--pixel) * 2);
-      font-size: 12px;
-    }
-
-    .dialog p {
-      margin: 0 0 calc(var(--pixel) * 3);
+    .modal p {
+      margin: 0 0 16px;
       font-size: 10px;
-      line-height: 1.6;
-      background: #f3dfe5;
-      border: var(--pixel) solid var(--panel-border);
-      padding: calc(var(--pixel) * 2);
+      line-height: 1.4;
+      color: var(--muted);
     }
 
-    .dialog button {
+    .modal button {
       width: 100%;
-      border: var(--pixel) solid var(--panel-border);
-      background: var(--rose-soft);
-      padding: calc(var(--pixel) * 2);
-      font-size: 11px;
+      border: none;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 12px;
+      background: var(--ok);
+      color: #06201b;
       cursor: pointer;
+    }
+
+    .overlay-screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      gap: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .overlay-screen.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .overflow-title {
+      font-size: 22px;
+      color: var(--accent);
+      text-shadow: 0 0 12px rgba(255, 95, 162, 0.9);
+    }
+
+    .shake {
+      animation: shake 0.35s ease-in-out infinite;
     }
 
     .flash {
@@ -355,7 +221,7 @@
     }
 
     .flash.active {
-      animation: flash 0.35s steps(3);
+      animation: flash 0.4s ease;
     }
 
     .scanlines {
@@ -363,169 +229,103 @@
       inset: 0;
       background: repeating-linear-gradient(
         to bottom,
-        rgba(56, 33, 46, 0.12),
-        rgba(56, 33, 46, 0.12) 1px,
+        rgba(255, 255, 255, 0.06),
+        rgba(255, 255, 255, 0.06) 1px,
         transparent 1px,
         transparent 4px
       );
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s steps(3);
+      transition: opacity 0.3s ease;
     }
 
     .scanlines.active {
       opacity: 1;
     }
 
-    .glitch-layer {
+    .toast-zone {
       position: absolute;
-      inset: 0;
-      opacity: 0;
-      pointer-events: none;
-      mix-blend-mode: multiply;
-      background: linear-gradient(90deg, rgba(255, 255, 255, 0.12), transparent);
-    }
-
-    .glitch-layer.active {
-      opacity: 1;
-      animation: glitch 0.8s steps(4);
-    }
-
-    .overflow-text {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      font-size: 18px;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .overflow-text.active {
-      opacity: 1;
-    }
-
-    .shake {
-      animation: shake 0.4s steps(4) infinite;
-    }
-
-    .spam-zone {
-      position: absolute;
-      inset: calc(var(--pixel) * 4);
+      inset: 20px;
       display: flex;
       flex-direction: column;
-      gap: calc(var(--pixel) * 2);
+      gap: 10px;
       align-items: center;
+      justify-content: flex-start;
       pointer-events: none;
     }
 
-    .spam-toast {
-      background: var(--panel);
-      border: var(--pixel) solid var(--panel-border);
-      padding: calc(var(--pixel) * 2);
+    .toast {
+      background: #1e1726;
+      border: 2px solid var(--accent);
+      padding: 8px 12px;
+      border-radius: 10px;
       font-size: 9px;
+      color: var(--accent-soft);
+      text-transform: uppercase;
       opacity: 0;
-      animation: toast 1.1s steps(4) forwards;
-      max-width: 240px;
-      box-shadow: inset 0 0 0 var(--pixel) #e4cfd8;
+      transform: translateY(-6px);
+      animation: toast 1.2s ease forwards;
+      max-width: 220px;
     }
 
-    .falling-hearts {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
+    .calm-text {
+      font-size: 16px;
+      color: var(--accent-soft);
       opacity: 0;
-      transition: opacity 0.3s steps(4);
+      transition: opacity 0.6s ease;
     }
 
-    .falling-hearts.active {
-      opacity: 0.4;
-    }
-
-    .falling-hearts span {
-      position: absolute;
-      width: calc(var(--pixel) * 3);
-      height: calc(var(--pixel) * 3);
-      background: var(--rose-soft);
-      animation: fall 2.6s linear infinite;
-    }
-
-    .calm-screen,
-    .victory-screen,
-    .ask-screen,
-    .end-screen {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: calc(var(--pixel) * 3);
-      opacity: 0;
-      pointer-events: none;
-      text-align: center;
-      padding: calc(var(--pixel) * 6);
-    }
-
-    .calm-screen.active,
-    .victory-screen.active,
-    .ask-screen.active,
-    .end-screen.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .calm-line {
-      opacity: 0;
-      transition: opacity 0.6s steps(3);
-      font-size: 14px;
-    }
-
-    .calm-line.show {
+    .calm-text.show {
       opacity: 1;
     }
 
-    .victory-screen h2,
-    .ask-screen h2,
-    .end-screen h2 {
-      font-size: 14px;
-      margin: 0;
+    .victory {
+      gap: 10px;
     }
 
-    .victory-screen p,
-    .ask-screen p,
-    .end-screen p {
+    .victory h2 {
+      font-size: 16px;
+    }
+
+    .victory p {
       font-size: 10px;
+      color: var(--muted);
       margin: 0;
-      line-height: 1.6;
-      max-width: 260px;
+      line-height: 1.5;
     }
 
-    .pixel-button {
-      border: var(--pixel) solid var(--panel-border);
-      background: var(--rose);
-      color: #fff;
-      padding: calc(var(--pixel) * 3) calc(var(--pixel) * 4);
-      font-size: 11px;
+    .primary-btn,
+    .secondary-btn {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 12px;
       cursor: pointer;
-      min-width: 180px;
     }
 
-    .pixel-button.secondary {
-      background: var(--panel);
-      color: var(--text);
-      min-width: 120px;
+    .primary-btn {
+      background: var(--accent);
+      color: #14060c;
     }
 
-    .pixel-button.glow {
-      animation: glow 1.6s steps(4) infinite;
+    .secondary-btn {
+      background: #281c36;
+      color: var(--accent-soft);
+      border: 2px solid var(--accent);
+    }
+
+    .ask-buttons {
+      width: 100%;
+      display: grid;
+      gap: 12px;
     }
 
     .tooltip {
       font-size: 9px;
+      color: var(--muted);
       opacity: 0;
-      transition: opacity 0.2s steps(2);
+      transition: opacity 0.2s ease;
     }
 
     .tooltip.show {
@@ -533,95 +333,93 @@
     }
 
     .wiggle {
-      animation: wiggle 0.35s steps(4);
+      animation: wiggle 0.35s ease;
     }
 
     .end-card {
-      border: var(--pixel) solid var(--panel-border);
-      background: var(--panel);
-      padding: calc(var(--pixel) * 3);
-      width: min(90%, 260px);
+      border: 2px solid var(--accent);
+      padding: 14px;
+      border-radius: 12px;
       font-size: 10px;
-      text-align: left;
+      background: #14101a;
+      width: 100%;
     }
 
-    .sparkle {
-      width: calc(var(--pixel) * 2);
-      height: calc(var(--pixel) * 2);
-      background: var(--gold);
-      animation: sparkle 1.4s steps(4) infinite;
+    .end-footer {
+      font-size: 9px;
+      color: var(--muted);
     }
 
     .confetti {
       position: absolute;
       inset: 0;
+      overflow: hidden;
       pointer-events: none;
     }
 
     .confetti span {
       position: absolute;
-      width: calc(var(--pixel) * 3);
-      height: calc(var(--pixel) * 3);
-      background: var(--rose);
+      width: 12px;
+      height: 12px;
+      background: var(--accent);
+      opacity: 0.8;
       animation: fall 2.8s linear infinite;
     }
 
+    .confetti span::before {
+      content: "";
+      display: block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent-soft);
+      box-shadow:
+        6px 0 var(--accent-soft),
+        0 6px var(--accent-soft),
+        6px 6px var(--accent-soft);
+    }
+
+    .hud.jitter {
+      animation: hud-jitter 0.4s infinite;
+    }
+
     @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(calc(var(--pixel) * -2)); }
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
     }
 
     @keyframes pop {
-      0% { transform: scale(1) translateY(0); opacity: 1; }
-      100% { transform: scale(1.2) translateY(calc(var(--pixel) * -2)); opacity: 0; }
-    }
-
-    @keyframes burst {
-      0% { opacity: 1; transform: scale(1); }
-      100% { opacity: 0; transform: scale(1.3); }
-    }
-
-    @keyframes dialog-in {
-      0% { transform: translate(-50%, calc(-50% + 8px)); }
-      60% { transform: translate(-50%, calc(-50% - 4px)); }
-      100% { transform: translate(-50%, -50%); }
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1.4);
+        opacity: 0;
+      }
     }
 
     @keyframes flash {
       0% { opacity: 0; }
-      50% { opacity: 0.8; }
+      30% { opacity: 0.9; }
       100% { opacity: 0; }
     }
 
     @keyframes shake {
-      0% { transform: translate(0, 0); }
-      50% { transform: translate(2px, -2px); }
-      100% { transform: translate(0, 0); }
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(2px, -1px); }
+      50% { transform: translate(-2px, 2px); }
+      75% { transform: translate(1px, -2px); }
     }
 
     @keyframes toast {
-      0% { opacity: 0; transform: translateY(-6px); }
+      0% { opacity: 0; transform: translateY(-8px); }
       20% { opacity: 1; transform: translateY(0); }
       80% { opacity: 1; }
-      100% { opacity: 0; transform: translateY(6px); }
-    }
-
-    @keyframes fall {
-      0% { transform: translateY(-20%); opacity: 0; }
-      15% { opacity: 0.8; }
-      100% { transform: translateY(120%); opacity: 0; }
-    }
-
-    @keyframes glitch {
-      0% { transform: translate(0, 0); }
-      40% { transform: translate(3px, -2px); }
-      80% { transform: translate(-2px, 2px); }
-      100% { transform: translate(0, 0); }
-    }
-
-    @keyframes glow {
-      0%, 100% { box-shadow: 0 0 0 var(--pixel) var(--panel-border); }
-      50% { box-shadow: 0 0 calc(var(--pixel) * 2) var(--pixel) var(--rose-soft); }
+      100% { opacity: 0; transform: translateY(8px); }
     }
 
     @keyframes wiggle {
@@ -632,21 +430,24 @@
       100% { transform: rotate(0deg); }
     }
 
-    @keyframes sparkle {
-      0%, 100% { opacity: 0.5; }
-      50% { opacity: 1; }
+    @keyframes fall {
+      0% { transform: translateY(-20%); opacity: 0; }
+      15% { opacity: 1; }
+      100% { transform: translateY(120%); opacity: 0; }
+    }
+
+    @keyframes hud-jitter {
+      0% { transform: translate(0, 0); }
+      50% { transform: translate(1px, -1px); }
+      100% { transform: translate(0, 0); }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .heart-button,
-      .heart-button.pop,
+      .pixel-heart,
       .shake,
-      .glitch-layer.active,
-      .spam-toast,
-      .confetti span,
-      .falling-hearts span,
-      .pixel-button.glow,
-      .sparkle {
+      .hud.jitter,
+      .toast,
+      .confetti span {
         animation: none !important;
       }
 
@@ -658,413 +459,297 @@
   </style>
 </head>
 <body>
-  <main class="game-screen" id="game">
-    <span class="corner-bottom left"></span>
-    <span class="corner-bottom right"></span>
-
-    <header class="hud" id="hud">
-      <div id="loveCount">❤️ LOVE: 0 / 5</div>
+  <div class="game-shell" id="game">
+    <div class="hud" id="hud">
+      <div class="hud-row">
+        <div id="loveCount">LOVE: 0/5</div>
+        <button class="audio-toggle" id="audioToggle">AUDIO: OFF</button>
+      </div>
       <div class="hud-title">HEART OVERFLOW</div>
-      <div class="hud-right">
-        <button class="audio-toggle" id="audioToggle">🔊 ON</button>
-      </div>
-      <div class="love-bar" id="loveBar" aria-hidden="true">
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-    </header>
+    </div>
 
-    <section class="playfield" id="playfield">
+    <div class="play-area" id="playArea">
       <div class="flash" id="flash"></div>
       <div class="scanlines" id="scanlines"></div>
-      <div class="glitch-layer" id="glitch"></div>
-      <div class="falling-hearts" id="fallingHearts"></div>
-      <div class="overflow-text" id="overflowText">❤️ LOVE OVERFLOW ❤️</div>
-      <div class="spam-zone" id="spamZone"></div>
-
-      <div class="overlay" id="overlay">
-        <div class="dialog" id="dialog" role="dialog" aria-modal="true">
-          <h2 id="dialogTitle">NOTICE</h2>
-          <p id="dialogBody">You collected a heart.</p>
-          <button id="dialogOk">OK</button>
-        </div>
+      <div class="toast-zone" id="toastZone"></div>
+      <div class="overlay-screen" id="overflowScreen">
+        <div class="overflow-title" id="overflowTitle">LOVE OVERFLOW</div>
       </div>
-
-      <div class="calm-screen" id="calmScreen">
-        <div class="calm-line" id="calmOne">Okay...</div>
-        <div class="calm-line" id="calmTwo">I surrender.</div>
+      <div class="overlay-screen" id="calmScreen">
+        <div class="calm-text" id="calmLineOne">Okay...</div>
+        <div class="calm-text" id="calmLineTwo">I surrender.</div>
       </div>
-
-      <div class="victory-screen" id="victoryScreen">
+      <div class="overlay-screen victory" id="victoryScreen">
         <div class="confetti" id="confetti"></div>
         <h2>GAME COMPLETED</h2>
-        <p>You collected every heart.</p>
-        <p>There were never going to be enough.</p>
-        <button class="pixel-button" id="continueBtn">CONTINUE</button>
+        <p>You collected every heart. There were never going to be enough.</p>
+        <button class="primary-btn" id="continueBtn">CONTINUE</button>
       </div>
-
-      <div class="ask-screen" id="askScreen">
+      <div class="overlay-screen" id="askScreen">
         <h2>Will you be my Valentine?</h2>
-        <p>Same game. Same player. Forever.</p>
-        <button class="pixel-button glow" id="yesBtn">YES ❤️</button>
-        <button class="pixel-button secondary" id="noBtn">NO</button>
+        <p>Same game, same player, forever.</p>
+        <div class="ask-buttons">
+          <button class="primary-btn" id="yesBtn">YES</button>
+          <button class="secondary-btn" id="noBtn">NO</button>
+        </div>
         <div class="tooltip" id="noTooltip">That option seems unavailable.</div>
       </div>
-
-      <div class="end-screen" id="endScreen">
+      <div class="overlay-screen" id="endScreen">
         <h2>SAVED 💾</h2>
-        <div class="end-card">
-          <div>Save Slot: VALENTINE 2026</div>
-          <div>Status: SAVED</div>
-        </div>
-        <p>Same player. Same game.</p>
-        <div class="sparkle"></div>
+        <div class="end-card">VALENTINE 2026, STATUS: SAVED</div>
+        <div class="end-footer">Same player, same game.</div>
       </div>
-    </section>
-  </main>
+      <div class="modal-backdrop" id="modal">
+        <div class="modal" role="dialog" aria-modal="true">
+          <h2 id="modalTitle">Nice!</h2>
+          <p id="modalBody">Your heart buffer is rising.</p>
+          <button id="modalOk">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
-    const playfield = document.getElementById('playfield');
+    const playArea = document.getElementById('playArea');
     const loveCount = document.getElementById('loveCount');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalOk = document.getElementById('modalOk');
     const audioToggle = document.getElementById('audioToggle');
-    const loveBar = document.getElementById('loveBar');
-    const overlay = document.getElementById('overlay');
-    const dialog = document.getElementById('dialog');
-    const dialogBody = document.getElementById('dialogBody');
-    const dialogOk = document.getElementById('dialogOk');
-    const flash = document.getElementById('flash');
-    const scanlines = document.getElementById('scanlines');
-    const glitch = document.getElementById('glitch');
-    const overflowText = document.getElementById('overflowText');
-    const spamZone = document.getElementById('spamZone');
-    const fallingHearts = document.getElementById('fallingHearts');
+    const overflowScreen = document.getElementById('overflowScreen');
+    const overflowTitle = document.getElementById('overflowTitle');
     const calmScreen = document.getElementById('calmScreen');
-    const calmOne = document.getElementById('calmOne');
-    const calmTwo = document.getElementById('calmTwo');
+    const calmLineOne = document.getElementById('calmLineOne');
+    const calmLineTwo = document.getElementById('calmLineTwo');
     const victoryScreen = document.getElementById('victoryScreen');
-    const confetti = document.getElementById('confetti');
     const continueBtn = document.getElementById('continueBtn');
     const askScreen = document.getElementById('askScreen');
     const yesBtn = document.getElementById('yesBtn');
     const noBtn = document.getElementById('noBtn');
     const noTooltip = document.getElementById('noTooltip');
     const endScreen = document.getElementById('endScreen');
+    const toastZone = document.getElementById('toastZone');
+    const flash = document.getElementById('flash');
+    const scanlines = document.getElementById('scanlines');
     const hud = document.getElementById('hud');
+    const confetti = document.getElementById('confetti');
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const STATES = {
-      PLAYING: 'PLAYING',
-      OVERFLOW: 'OVERFLOW',
-      SPAM: 'SPAM',
-      CALM: 'CALM',
-      VICTORY: 'VICTORY',
-      ASK: 'ASK',
-      END: 'END'
-    };
-
-    let state = STATES.PLAYING;
     let score = 0;
-    let heart = null;
-    let popupIndex = 0;
-    let noClicks = 0;
-    let spamTimer = null;
+    let currentHeart = null;
     let audioUnlocked = false;
-    let audioEnabled = true;
-    let audioContext = null;
-    let audioSuppressed = false;
+    let audioEnabled = false;
+    let noClicks = 0;
+    let toastTimer = null;
 
-    const popupMessages = [
-      'You collected a heart.',
-      'I think that one was already yours.',
-      'Another heart found.',
-      'This is getting suspicious…',
-      'Heart secured.',
-      'How are you this easy to love?',
-      'Warning.',
-      'Heart overload approaching.',
-      'Too late.',
-      'System cannot handle this much love.'
+    const modalCopy = [
+      { title: 'Heartbeat +1', body: 'A fresh pulse joins the stack.' },
+      { title: 'Sync Up', body: 'Another beat, another memory.' },
+      { title: 'Overflow Imminent', body: 'The buffer is almost full.' },
+      { title: 'Stacked Love', body: 'Your heart cache is shimmering.' },
+      { title: 'MAX SIGNAL', body: 'Love storage can\'t expand.' }
     ];
 
     const spamMessages = [
-      'ERROR, too much affection detected',
       'Love buffer exceeded',
-      'This game was not prepared for you',
-      'Permanent feelings installed',
       'Unable to uninstall wife.exe',
-      'Critical failure, heart stolen'
+      'Signal: ♥ overflow',
+      'Reallocating feelings',
+      'Heart drive 99% full',
+      'Ejecting calm.dll',
+      'Too many hugs detected',
+      'Stack trace: affection'
     ];
 
-    function setState(nextState) {
-      state = nextState;
-    }
-
     function updateHud() {
-      loveCount.textContent = `❤️ LOVE: ${score} / 5`;
-      if (loveBar) {
-        const segments = loveBar.querySelectorAll('span');
-        segments.forEach((segment, index) => {
-          segment.classList.toggle('active', index < score);
-        });
-      }
+      loveCount.textContent = `LOVE: ${score}/5`;
     }
 
-    function ensureAudio() {
+    function unlockAudio() {
       if (audioUnlocked) return;
       audioUnlocked = true;
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      audioEnabled = true;
+      audioToggle.classList.add('active');
+      audioToggle.textContent = 'AUDIO: ON';
     }
 
-    function playTone({ frequency = 440, duration = 0.12, type = 'square', volume = 0.06 }) {
-      if (!audioUnlocked || !audioEnabled || audioSuppressed) return;
-      const ctx = audioContext;
-      if (!ctx) return;
-      const oscillator = ctx.createOscillator();
-      const gain = ctx.createGain();
-      oscillator.type = type;
-      oscillator.frequency.value = frequency;
-      gain.gain.value = volume;
+    function playPickupSound() {
+      if (!audioUnlocked || !audioEnabled) return;
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.type = 'triangle';
+      oscillator.frequency.value = 540;
+      gain.gain.value = 0.08;
       oscillator.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(audioContext.destination);
       oscillator.start();
-      oscillator.stop(ctx.currentTime + duration);
-    }
-
-    function playSequence(sequence) {
-      if (!audioUnlocked || !audioEnabled || audioSuppressed) return;
-      let startAt = audioContext.currentTime;
-      sequence.forEach((note) => {
-        const oscillator = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        oscillator.type = note.type || 'square';
-        oscillator.frequency.value = note.freq;
-        gain.gain.value = note.volume || 0.06;
-        oscillator.connect(gain);
-        gain.connect(audioContext.destination);
-        oscillator.start(startAt);
-        oscillator.stop(startAt + note.duration);
-        startAt += note.duration + (note.gap || 0.02);
-      });
+      oscillator.frequency.exponentialRampToValueAtTime(980, audioContext.currentTime + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.18);
+      oscillator.stop(audioContext.currentTime + 0.2);
+      oscillator.onended = () => audioContext.close();
     }
 
     function spawnHeart() {
-      if (state !== STATES.PLAYING) return;
-      if (heart) heart.remove();
-
-      const button = document.createElement('button');
-      button.className = 'heart-button';
-      button.setAttribute('aria-label', 'Collect heart');
-      const heartShade = document.createElement('span');
-      button.appendChild(heartShade);
-
-      const padding = 40;
-      const rect = playfield.getBoundingClientRect();
-      const maxX = rect.width - padding - 136;
-      const maxY = rect.height - padding - 136;
-      const x = padding + Math.random() * Math.max(1, maxX - padding);
-      const y = padding + Math.random() * Math.max(1, maxY - padding);
-      button.style.left = `${Math.round(x)}px`;
-      button.style.top = `${Math.round(y)}px`;
-
-      button.addEventListener('pointerdown', () => handleHeartTap(button), { once: true });
-      playfield.appendChild(button);
-      heart = button;
-    }
-
-    function handleHeartTap(target) {
-      if (state !== STATES.PLAYING) return;
-      score = Math.min(5, score + 1);
-      updateHud();
-      playSequence([
-        { freq: 520, duration: 0.08 },
-        { freq: 720, duration: 0.1 }
-      ]);
-
-      target.classList.add('pop');
-      const burst = document.createElement('div');
-      burst.className = 'pixel-burst';
-      burst.style.left = `${target.offsetLeft + 62}px`;
-      burst.style.top = `${target.offsetTop + 62}px`;
-      playfield.appendChild(burst);
-      burst.addEventListener('animationend', () => burst.remove());
-      target.addEventListener('animationend', () => target.remove());
-
-      showDialog();
-    }
-
-    function showDialog() {
-      const message = popupMessages[Math.min(popupIndex, popupMessages.length - 1)];
-      popupIndex += 1;
-      dialogBody.textContent = message;
-      overlay.classList.add('active');
-      dialog.classList.add('active');
-      playTone({ frequency: 660, duration: 0.08, type: 'triangle', volume: 0.04 });
-    }
-
-    function closeDialog() {
-      dialog.classList.remove('active');
-      overlay.classList.remove('active');
-
-      if (score >= 5) {
-        if (popupIndex < popupMessages.length) {
-          window.setTimeout(showDialog, 320);
-          return;
-        }
-        startOverflow();
-        return;
+      if (currentHeart) {
+        currentHeart.remove();
       }
+      const heart = document.createElement('button');
+      heart.className = 'pixel-heart';
+      heart.setAttribute('aria-label', 'Collect heart');
 
-      window.setTimeout(spawnHeart, 500);
+      const safeMargin = 40;
+      const areaRect = playArea.getBoundingClientRect();
+      const maxX = areaRect.width - safeMargin - 72;
+      const maxY = areaRect.height - safeMargin - 72;
+      const x = Math.max(safeMargin, Math.random() * maxX);
+      const y = Math.max(safeMargin, Math.random() * maxY);
+      heart.style.left = `${x}px`;
+      heart.style.top = `${y}px`;
+
+      heart.addEventListener('click', () => handleHeartTap(heart), { once: true });
+      playArea.appendChild(heart);
+      currentHeart = heart;
     }
 
-    function startOverflow() {
-      setState(STATES.OVERFLOW);
+    function handleHeartTap(heart) {
+      score += 1;
+      updateHud();
+      playPickupSound();
+      heart.classList.add('pop');
+      heart.addEventListener('animationend', () => heart.remove());
+      showModalForScore(score);
+    }
+
+    function showModalForScore(currentScore) {
+      const copy = modalCopy[currentScore - 1];
+      modalTitle.textContent = copy.title;
+      modalBody.textContent = copy.body;
+      modal.classList.add('active');
+    }
+
+    function closeModal() {
+      modal.classList.remove('active');
+      if (score < 5) {
+        spawnHeart();
+      } else {
+        startOverflowSequence();
+      }
+    }
+
+    function startOverflowSequence() {
       flash.classList.add('active');
       scanlines.classList.add('active');
-      overflowText.classList.add('active');
-      glitch.classList.add('active');
+      overflowScreen.classList.add('active');
       if (!prefersReducedMotion) {
-        hud.classList.add('shake');
+        overflowTitle.classList.add('shake');
+        hud.classList.add('jitter');
       }
-      playSequence([
-        { freq: 240, duration: 0.12, type: 'sawtooth' },
-        { freq: 180, duration: 0.12, type: 'sawtooth' }
-      ]);
-
       window.setTimeout(() => {
-        overflowText.classList.remove('active');
-        glitch.classList.remove('active');
+        overflowScreen.classList.remove('active');
         beginSpam();
       }, 900);
     }
 
-    function buildFallingHearts() {
-      fallingHearts.innerHTML = '';
-      for (let i = 0; i < 12; i += 1) {
-        const piece = document.createElement('span');
-        piece.style.left = `${Math.random() * 100}%`;
-        piece.style.animationDelay = `${Math.random() * 1.4}s`;
-        fallingHearts.appendChild(piece);
-      }
-    }
-
     function beginSpam() {
-      setState(STATES.SPAM);
-      buildFallingHearts();
-      fallingHearts.classList.add('active');
       const start = Date.now();
-
       function scheduleToast() {
-        if (Date.now() - start > 3000) {
+        if (Date.now() - start > 3200) {
           endSpam();
           return;
         }
         pushToast();
         const delay = 350 + Math.random() * 100;
-        spamTimer = window.setTimeout(scheduleToast, delay);
+        toastTimer = window.setTimeout(scheduleToast, delay);
       }
-
       scheduleToast();
     }
 
     function pushToast() {
-      const existing = spamZone.querySelectorAll('.spam-toast');
+      const existing = toastZone.querySelectorAll('.toast');
       if (existing.length >= 2) {
         existing[0].remove();
       }
       const toast = document.createElement('div');
-      toast.className = 'spam-toast';
+      toast.className = 'toast';
       toast.textContent = spamMessages[Math.floor(Math.random() * spamMessages.length)];
-      spamZone.appendChild(toast);
-      playTone({ frequency: 880, duration: 0.05, type: 'square', volume: 0.03 });
+      toastZone.appendChild(toast);
       toast.addEventListener('animationend', () => toast.remove());
     }
 
     function endSpam() {
-      if (spamTimer) {
-        window.clearTimeout(spamTimer);
+      if (toastTimer) {
+        window.clearTimeout(toastTimer);
       }
-      spamZone.innerHTML = '';
+      toastZone.innerHTML = '';
       scanlines.classList.remove('active');
-      hud.classList.remove('shake');
-      fallingHearts.classList.remove('active');
-      audioSuppressed = true;
-      startCalm();
+      hud.classList.remove('jitter');
+      showCalm();
     }
 
-    function startCalm() {
-      setState(STATES.CALM);
+    function showCalm() {
       calmScreen.classList.add('active');
-      calmOne.classList.remove('show');
-      calmTwo.classList.remove('show');
-      window.setTimeout(() => calmOne.classList.add('show'), 200);
-      window.setTimeout(() => calmTwo.classList.add('show'), 900);
+      window.setTimeout(() => calmLineOne.classList.add('show'), 200);
+      window.setTimeout(() => calmLineTwo.classList.add('show'), 900);
       window.setTimeout(() => {
         calmScreen.classList.remove('active');
-        audioSuppressed = false;
         showVictory();
       }, 2200);
     }
 
     function buildConfetti() {
       confetti.innerHTML = '';
-      for (let i = 0; i < 14; i += 1) {
+      for (let i = 0; i < 18; i += 1) {
         const piece = document.createElement('span');
         piece.style.left = `${Math.random() * 100}%`;
         piece.style.animationDelay = `${Math.random() * 1.4}s`;
+        piece.style.opacity = `${0.6 + Math.random() * 0.4}`;
         confetti.appendChild(piece);
       }
     }
 
     function showVictory() {
-      setState(STATES.VICTORY);
       buildConfetti();
       victoryScreen.classList.add('active');
-      playSequence([
-        { freq: 520, duration: 0.12 },
-        { freq: 660, duration: 0.12 },
-        { freq: 820, duration: 0.2 }
-      ]);
     }
 
     function showAsk() {
-      setState(STATES.ASK);
       victoryScreen.classList.remove('active');
       askScreen.classList.add('active');
     }
 
     function showEnd() {
-      setState(STATES.END);
       askScreen.classList.remove('active');
       endScreen.classList.add('active');
-      playSequence([
-        { freq: 740, duration: 0.12 },
-        { freq: 980, duration: 0.18 }
-      ]);
     }
 
-    dialogOk.addEventListener('pointerdown', closeDialog);
-    overlay.addEventListener('pointerdown', (event) => {
-      if (event.target === overlay) {
-        closeDialog();
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closeModal();
       }
     });
 
-    audioToggle.addEventListener('pointerdown', () => {
-      ensureAudio();
+    modalOk.addEventListener('click', closeModal);
+
+    audioToggle.addEventListener('click', () => {
+      if (!audioUnlocked) {
+        unlockAudio();
+        return;
+      }
       audioEnabled = !audioEnabled;
-      audioToggle.classList.toggle('off', !audioEnabled);
-      audioToggle.textContent = audioEnabled ? '🔊 ON' : '🔇 OFF';
+      audioToggle.classList.toggle('active', audioEnabled);
+      audioToggle.textContent = `AUDIO: ${audioEnabled ? 'ON' : 'OFF'}`;
     });
 
-    continueBtn.addEventListener('pointerdown', showAsk);
-    yesBtn.addEventListener('pointerdown', showEnd);
+    document.addEventListener('pointerdown', unlockAudio, { once: true });
 
-    noBtn.addEventListener('pointerdown', () => {
+    continueBtn.addEventListener('click', showAsk);
+
+    yesBtn.addEventListener('click', showEnd);
+
+    noBtn.addEventListener('click', () => {
       if (noClicks === 0) {
         noTooltip.classList.add('show');
         if (!prefersReducedMotion) {
@@ -1081,10 +766,6 @@
       }
       showEnd();
     });
-
-    document.addEventListener('pointerdown', () => {
-      ensureAudio();
-    }, { once: true });
 
     updateHud();
     spawnHeart();
