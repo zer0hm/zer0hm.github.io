@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HEART OVERFLOW</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0b10;
+      --frame: #1b1b25;
+      --frame-border: #f26ca7;
+      --accent: #ff5fa2;
+      --accent-soft: #ffb3d1;
+      --text: #f7f0f5;
+      --muted: #a3a0b3;
+      --ok: #6cf2d9;
+      font-family: "Press Start 2P", system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #1c1126, #08060e 60%);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+        env(safe-area-inset-bottom) env(safe-area-inset-left);
+      overflow: hidden;
+    }
+
+    .game-shell {
+      width: min(92vw, 420px);
+      background: var(--frame);
+      border: 3px solid var(--frame-border);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+      position: relative;
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .hud-title {
+      grid-column: 1 / -1;
+      text-align: center;
+      font-size: 14px;
+      margin-top: 6px;
+      color: var(--accent-soft);
+    }
+
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .audio-toggle {
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      background: transparent;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    .audio-toggle.active {
+      background: var(--accent);
+      color: #14060c;
+    }
+
+    .play-area {
+      position: relative;
+      height: 360px;
+      border-radius: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(180deg, rgba(255, 95, 162, 0.1), transparent);
+      overflow: hidden;
+    }
+
+    .pixel-heart {
+      position: absolute;
+      width: 72px;
+      height: 72px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      animation: float 2.8s ease-in-out infinite;
+    }
+
+    .pixel-heart::before {
+      content: "";
+      width: 18px;
+      height: 18px;
+      background: var(--accent);
+      box-shadow:
+        18px 0 var(--accent),
+        36px 0 var(--accent),
+        54px 0 var(--accent),
+        0 18px var(--accent),
+        18px 18px var(--accent),
+        36px 18px var(--accent),
+        54px 18px var(--accent),
+        0 36px var(--accent),
+        18px 36px var(--accent),
+        36px 36px var(--accent),
+        18px 54px var(--accent),
+        36px 54px var(--accent);
+    }
+
+    .pixel-heart.pop {
+      animation: pop 0.3s ease-out forwards;
+    }
+
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 6, 14, 0.72);
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: #14121c;
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 18px;
+      text-align: center;
+      width: min(80%, 280px);
+      box-shadow: 0 0 18px rgba(255, 95, 162, 0.3);
+    }
+
+    .modal h2 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: var(--accent-soft);
+    }
+
+    .modal p {
+      margin: 0 0 16px;
+      font-size: 10px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    .modal button {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 12px;
+      background: var(--ok);
+      color: #06201b;
+      cursor: pointer;
+    }
+
+    .overlay-screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      gap: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .overlay-screen.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .overflow-title {
+      font-size: 22px;
+      color: var(--accent);
+      text-shadow: 0 0 12px rgba(255, 95, 162, 0.9);
+    }
+
+    .shake {
+      animation: shake 0.35s ease-in-out infinite;
+    }
+
+    .flash {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .flash.active {
+      animation: flash 0.4s ease;
+    }
+
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.06),
+        rgba(255, 255, 255, 0.06) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .scanlines.active {
+      opacity: 1;
+    }
+
+    .toast-zone {
+      position: absolute;
+      inset: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-start;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: #1e1726;
+      border: 2px solid var(--accent);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 9px;
+      color: var(--accent-soft);
+      text-transform: uppercase;
+      opacity: 0;
+      transform: translateY(-6px);
+      animation: toast 1.2s ease forwards;
+      max-width: 220px;
+    }
+
+    .calm-text {
+      font-size: 16px;
+      color: var(--accent-soft);
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    .calm-text.show {
+      opacity: 1;
+    }
+
+    .victory {
+      gap: 10px;
+    }
+
+    .victory h2 {
+      font-size: 16px;
+    }
+
+    .victory p {
+      font-size: 10px;
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .primary-btn {
+      background: var(--accent);
+      color: #14060c;
+    }
+
+    .secondary-btn {
+      background: #281c36;
+      color: var(--accent-soft);
+      border: 2px solid var(--accent);
+    }
+
+    .ask-buttons {
+      width: 100%;
+      display: grid;
+      gap: 12px;
+    }
+
+    .tooltip {
+      font-size: 9px;
+      color: var(--muted);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .tooltip.show {
+      opacity: 1;
+    }
+
+    .wiggle {
+      animation: wiggle 0.35s ease;
+    }
+
+    .end-card {
+      border: 2px solid var(--accent);
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 10px;
+      background: #14101a;
+      width: 100%;
+    }
+
+    .end-footer {
+      font-size: 9px;
+      color: var(--muted);
+    }
+
+    .confetti {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .confetti span {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: var(--accent);
+      opacity: 0.8;
+      animation: fall 2.8s linear infinite;
+    }
+
+    .confetti span::before {
+      content: "";
+      display: block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent-soft);
+      box-shadow:
+        6px 0 var(--accent-soft),
+        0 6px var(--accent-soft),
+        6px 6px var(--accent-soft);
+    }
+
+    .hud.jitter {
+      animation: hud-jitter 0.4s infinite;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1.4);
+        opacity: 0;
+      }
+    }
+
+    @keyframes flash {
+      0% { opacity: 0; }
+      30% { opacity: 0.9; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(2px, -1px); }
+      50% { transform: translate(-2px, 2px); }
+      75% { transform: translate(1px, -2px); }
+    }
+
+    @keyframes toast {
+      0% { opacity: 0; transform: translateY(-8px); }
+      20% { opacity: 1; transform: translateY(0); }
+      80% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(8px); }
+    }
+
+    @keyframes wiggle {
+      0% { transform: rotate(0deg); }
+      25% { transform: rotate(-4deg); }
+      50% { transform: rotate(4deg); }
+      75% { transform: rotate(-3deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    @keyframes fall {
+      0% { transform: translateY(-20%); opacity: 0; }
+      15% { opacity: 1; }
+      100% { transform: translateY(120%); opacity: 0; }
+    }
+
+    @keyframes hud-jitter {
+      0% { transform: translate(0, 0); }
+      50% { transform: translate(1px, -1px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pixel-heart,
+      .shake,
+      .hud.jitter,
+      .toast,
+      .confetti span {
+        animation: none !important;
+      }
+
+      .flash.active {
+        animation: none;
+        opacity: 0.6;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-shell" id="game">
+    <div class="hud" id="hud">
+      <div class="hud-row">
+        <div id="loveCount">LOVE: 0/5</div>
+        <button class="audio-toggle" id="audioToggle">AUDIO: OFF</button>
+      </div>
+      <div class="hud-title">HEART OVERFLOW</div>
+    </div>
+
+    <div class="play-area" id="playArea">
+      <div class="flash" id="flash"></div>
+      <div class="scanlines" id="scanlines"></div>
+      <div class="toast-zone" id="toastZone"></div>
+      <div class="overlay-screen" id="overflowScreen">
+        <div class="overflow-title" id="overflowTitle">LOVE OVERFLOW</div>
+      </div>
+      <div class="overlay-screen" id="calmScreen">
+        <div class="calm-text" id="calmLineOne">Okay...</div>
+        <div class="calm-text" id="calmLineTwo">I surrender.</div>
+      </div>
+      <div class="overlay-screen victory" id="victoryScreen">
+        <div class="confetti" id="confetti"></div>
+        <h2>GAME COMPLETED</h2>
+        <p>You collected every heart. There were never going to be enough.</p>
+        <button class="primary-btn" id="continueBtn">CONTINUE</button>
+      </div>
+      <div class="overlay-screen" id="askScreen">
+        <h2>Will you be my Valentine?</h2>
+        <p>Same game, same player, forever.</p>
+        <div class="ask-buttons">
+          <button class="primary-btn" id="yesBtn">YES</button>
+          <button class="secondary-btn" id="noBtn">NO</button>
+        </div>
+        <div class="tooltip" id="noTooltip">That option seems unavailable.</div>
+      </div>
+      <div class="overlay-screen" id="endScreen">
+        <h2>SAVED 💾</h2>
+        <div class="end-card">VALENTINE 2026, STATUS: SAVED</div>
+        <div class="end-footer">Same player, same game.</div>
+      </div>
+      <div class="modal-backdrop" id="modal">
+        <div class="modal" role="dialog" aria-modal="true">
+          <h2 id="modalTitle">Nice!</h2>
+          <p id="modalBody">Your heart buffer is rising.</p>
+          <button id="modalOk">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const playArea = document.getElementById('playArea');
+    const loveCount = document.getElementById('loveCount');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalOk = document.getElementById('modalOk');
+    const audioToggle = document.getElementById('audioToggle');
+    const overflowScreen = document.getElementById('overflowScreen');
+    const overflowTitle = document.getElementById('overflowTitle');
+    const calmScreen = document.getElementById('calmScreen');
+    const calmLineOne = document.getElementById('calmLineOne');
+    const calmLineTwo = document.getElementById('calmLineTwo');
+    const victoryScreen = document.getElementById('victoryScreen');
+    const continueBtn = document.getElementById('continueBtn');
+    const askScreen = document.getElementById('askScreen');
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn = document.getElementById('noBtn');
+    const noTooltip = document.getElementById('noTooltip');
+    const endScreen = document.getElementById('endScreen');
+    const toastZone = document.getElementById('toastZone');
+    const flash = document.getElementById('flash');
+    const scanlines = document.getElementById('scanlines');
+    const hud = document.getElementById('hud');
+    const confetti = document.getElementById('confetti');
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let score = 0;
+    let currentHeart = null;
+    let audioUnlocked = false;
+    let audioEnabled = false;
+    let noClicks = 0;
+    let toastTimer = null;
+
+    const modalCopy = [
+      { title: 'Heartbeat +1', body: 'A fresh pulse joins the stack.' },
+      { title: 'Sync Up', body: 'Another beat, another memory.' },
+      { title: 'Overflow Imminent', body: 'The buffer is almost full.' },
+      { title: 'Stacked Love', body: 'Your heart cache is shimmering.' },
+      { title: 'MAX SIGNAL', body: 'Love storage can\'t expand.' }
+    ];
+
+    const spamMessages = [
+      'Love buffer exceeded',
+      'Unable to uninstall wife.exe',
+      'Signal: ♥ overflow',
+      'Reallocating feelings',
+      'Heart drive 99% full',
+      'Ejecting calm.dll',
+      'Too many hugs detected',
+      'Stack trace: affection'
+    ];
+
+    function updateHud() {
+      loveCount.textContent = `LOVE: ${score}/5`;
+    }
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      audioEnabled = true;
+      audioToggle.classList.add('active');
+      audioToggle.textContent = 'AUDIO: ON';
+    }
+
+    function playPickupSound() {
+      if (!audioUnlocked || !audioEnabled) return;
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.type = 'triangle';
+      oscillator.frequency.value = 540;
+      gain.gain.value = 0.08;
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start();
+      oscillator.frequency.exponentialRampToValueAtTime(980, audioContext.currentTime + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.18);
+      oscillator.stop(audioContext.currentTime + 0.2);
+      oscillator.onended = () => audioContext.close();
+    }
+
+    function spawnHeart() {
+      if (currentHeart) {
+        currentHeart.remove();
+      }
+      const heart = document.createElement('button');
+      heart.className = 'pixel-heart';
+      heart.setAttribute('aria-label', 'Collect heart');
+
+      const safeMargin = 40;
+      const areaRect = playArea.getBoundingClientRect();
+      const maxX = areaRect.width - safeMargin - 72;
+      const maxY = areaRect.height - safeMargin - 72;
+      const x = Math.max(safeMargin, Math.random() * maxX);
+      const y = Math.max(safeMargin, Math.random() * maxY);
+      heart.style.left = `${x}px`;
+      heart.style.top = `${y}px`;
+
+      heart.addEventListener('click', () => handleHeartTap(heart), { once: true });
+      playArea.appendChild(heart);
+      currentHeart = heart;
+    }
+
+    function handleHeartTap(heart) {
+      score += 1;
+      updateHud();
+      playPickupSound();
+      heart.classList.add('pop');
+      heart.addEventListener('animationend', () => heart.remove());
+      showModalForScore(score);
+    }
+
+    function showModalForScore(currentScore) {
+      const copy = modalCopy[currentScore - 1];
+      modalTitle.textContent = copy.title;
+      modalBody.textContent = copy.body;
+      modal.classList.add('active');
+    }
+
+    function closeModal() {
+      modal.classList.remove('active');
+      if (score < 5) {
+        spawnHeart();
+      } else {
+        startOverflowSequence();
+      }
+    }
+
+    function startOverflowSequence() {
+      flash.classList.add('active');
+      scanlines.classList.add('active');
+      overflowScreen.classList.add('active');
+      if (!prefersReducedMotion) {
+        overflowTitle.classList.add('shake');
+        hud.classList.add('jitter');
+      }
+      window.setTimeout(() => {
+        overflowScreen.classList.remove('active');
+        beginSpam();
+      }, 900);
+    }
+
+    function beginSpam() {
+      const start = Date.now();
+      function scheduleToast() {
+        if (Date.now() - start > 3200) {
+          endSpam();
+          return;
+        }
+        pushToast();
+        const delay = 350 + Math.random() * 100;
+        toastTimer = window.setTimeout(scheduleToast, delay);
+      }
+      scheduleToast();
+    }
+
+    function pushToast() {
+      const existing = toastZone.querySelectorAll('.toast');
+      if (existing.length >= 2) {
+        existing[0].remove();
+      }
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = spamMessages[Math.floor(Math.random() * spamMessages.length)];
+      toastZone.appendChild(toast);
+      toast.addEventListener('animationend', () => toast.remove());
+    }
+
+    function endSpam() {
+      if (toastTimer) {
+        window.clearTimeout(toastTimer);
+      }
+      toastZone.innerHTML = '';
+      scanlines.classList.remove('active');
+      hud.classList.remove('jitter');
+      showCalm();
+    }
+
+    function showCalm() {
+      calmScreen.classList.add('active');
+      window.setTimeout(() => calmLineOne.classList.add('show'), 200);
+      window.setTimeout(() => calmLineTwo.classList.add('show'), 900);
+      window.setTimeout(() => {
+        calmScreen.classList.remove('active');
+        showVictory();
+      }, 2200);
+    }
+
+    function buildConfetti() {
+      confetti.innerHTML = '';
+      for (let i = 0; i < 18; i += 1) {
+        const piece = document.createElement('span');
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.animationDelay = `${Math.random() * 1.4}s`;
+        piece.style.opacity = `${0.6 + Math.random() * 0.4}`;
+        confetti.appendChild(piece);
+      }
+    }
+
+    function showVictory() {
+      buildConfetti();
+      victoryScreen.classList.add('active');
+    }
+
+    function showAsk() {
+      victoryScreen.classList.remove('active');
+      askScreen.classList.add('active');
+    }
+
+    function showEnd() {
+      askScreen.classList.remove('active');
+      endScreen.classList.add('active');
+    }
+
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+
+    modalOk.addEventListener('click', closeModal);
+
+    audioToggle.addEventListener('click', () => {
+      if (!audioUnlocked) {
+        unlockAudio();
+        return;
+      }
+      audioEnabled = !audioEnabled;
+      audioToggle.classList.toggle('active', audioEnabled);
+      audioToggle.textContent = `AUDIO: ${audioEnabled ? 'ON' : 'OFF'}`;
+    });
+
+    document.addEventListener('pointerdown', unlockAudio, { once: true });
+
+    continueBtn.addEventListener('click', showAsk);
+
+    yesBtn.addEventListener('click', showEnd);
+
+    noBtn.addEventListener('click', () => {
+      if (noClicks === 0) {
+        noTooltip.classList.add('show');
+        if (!prefersReducedMotion) {
+          noBtn.classList.add('wiggle');
+          noBtn.addEventListener('animationend', () => noBtn.classList.remove('wiggle'), { once: true });
+        }
+        noClicks += 1;
+        return;
+      }
+      if (noClicks === 1) {
+        noBtn.textContent = 'OKAY FINE YES';
+        noClicks += 1;
+        return;
+      }
+      showEnd();
+    });
+
+    updateHud();
+    spawnHeart();
+  </script>
+</body>
+</html>
