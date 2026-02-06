@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cave of the Lost Sword</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: monospace;
+    }
+    canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      border: 3px solid #444;
+    }
+    #ui {
+      position: absolute;
+      bottom: 30px;
+      color: #ccc;
+      font-size: 14px;
+      text-align: center;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="ui">Arrow Keys / WASD to move</div>
+  <script>
+// ── Constants ────────────────────────────────────────────────────
+const TILE  = 16;          // pixels per tile (native)
+const SCALE = 3;           // render scale
+const COLS  = 20;
+const ROWS  = 15;
+const W     = COLS * TILE; // 320
+const H     = ROWS * TILE; // 240
+
+const canvas = document.getElementById('game');
+const ctx    = canvas.getContext('2d');
+canvas.width  = W * SCALE;
+canvas.height = H * SCALE;
+ctx.imageSmoothingEnabled = false;
+
+// Off-screen buffer at native resolution
+const buf    = document.createElement('canvas');
+buf.width = W; buf.height = H;
+const bctx   = buf.getContext('2d');
+bctx.imageSmoothingEnabled = false;
+
+const ui = document.getElementById('ui');
+
+// ── Palette ──────────────────────────────────────────────────────
+const C = {
+  sky:        '#5fcde4',
+  grass1:     '#3e8948',
+  grass2:     '#4fa84f',
+  dirt:       '#8a5a2b',
+  stone:      '#6b6b6b',
+  stoneDark:  '#4a4a4a',
+  stoneLight: '#8a8a8a',
+  caveBg:     '#1a1a2e',
+  caveFloor:  '#3d3d5c',
+  caveWall:   '#2a2a44',
+  black:      '#0f0f23',
+  skin:       '#f5c5a3',
+  hair:       '#6a3a1a',
+  shirt:      '#3a7ecf',
+  pants:      '#3a3a6a',
+  boots:      '#5a3a1a',
+  swordBlade: '#d4d4e8',
+  swordHilt:  '#c8a23c',
+  swordGlow:  '#ffe066',
+  treeTrunk:  '#6a4420',
+  treeLeaf1:  '#2d6e2d',
+  treeLeaf2:  '#4a9e4a',
+  water:      '#3a6ecf',
+  waterLight: '#5a9eef',
+  gold:       '#ffe066',
+  white:      '#ffffff',
+  red:        '#e04040',
+};
+
+// ── Game State ───────────────────────────────────────────────────
+let scene      = 'title';   // 'title' | 'overworld' | 'cave' | 'win'
+let player     = { x: 3, y: 10, dir: 'down', frame: 0, moving: false };
+let frameCount = 0;
+let animTimer  = 0;
+let swordCollected = false;
+let winTimer   = 0;
+let titleBlink = 0;
+let transitionAlpha = 0;
+let transitioning = false;
+let transitionTarget = '';
+let transitionSpawnX = 0;
+let transitionSpawnY = 0;
+
+// ── Input ────────────────────────────────────────────────────────
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.key] = true; e.preventDefault(); });
+window.addEventListener('keyup',   e => { keys[e.key] = false; });
+
+function inputDir() {
+  if (keys['ArrowUp']    || keys['w'] || keys['W']) return 'up';
+  if (keys['ArrowDown']  || keys['s'] || keys['S']) return 'down';
+  if (keys['ArrowLeft']  || keys['a'] || keys['A']) return 'left';
+  if (keys['ArrowRight'] || keys['d'] || keys['D']) return 'right';
+  return null;
+}
+
+// ── Tile Maps ────────────────────────────────────────────────────
+// 0=grass, 1=dirt path, 2=water, 3=tree, 4=stone wall, 5=cave entrance,
+// 6=cave floor, 7=cave wall, 8=sword pedestal, 9=rock
+
+const overworldMap = [
+  [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
+  [3,0,0,0,0,0,3,0,0,0,0,0,0,3,0,0,0,0,0,3],
+  [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
+  [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,3],
+  [3,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,3],
+  [3,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,3],
+  [3,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,3],
+  [3,0,0,3,0,1,0,0,0,0,0,0,0,1,0,0,3,0,0,3],
+  [3,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,3],
+  [3,0,0,0,0,1,1,1,1,5,1,1,1,1,0,0,0,0,0,3],
+  [3,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,3],
+  [3,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,9,0,0,3],
+  [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
+  [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
+  [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
+];
+
+const caveMap = [
+  [7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7],
+  [7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7],
+  [7,7,7,7,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7,7],
+  [7,7,7,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7],
+  [7,7,7,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7],
+  [7,7,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7],
+  [7,7,6,6,6,6,6,6,6,8,6,6,6,6,6,6,6,6,7,7],
+  [7,7,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7],
+  [7,7,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7],
+  [7,7,7,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7],
+  [7,7,7,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7],
+  [7,7,7,7,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7,7],
+  [7,7,7,7,7,7,7,7,6,6,6,7,7,7,7,7,7,7,7,7],
+  [7,7,7,7,7,7,7,7,6,5,6,7,7,7,7,7,7,7,7,7],
+  [7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7],
+];
+
+function currentMap() {
+  return scene === 'cave' ? caveMap : overworldMap;
+}
+
+function isSolid(tx, ty) {
+  const map = currentMap();
+  if (ty < 0 || ty >= ROWS || tx < 0 || tx >= COLS) return true;
+  const t = map[ty][tx];
+  return t === 3 || t === 2 || t === 4 || t === 7 || t === 9;
+}
+
+// ── Drawing Helpers ──────────────────────────────────────────────
+function px(x, y, color) {
+  bctx.fillStyle = color;
+  bctx.fillRect(x, y, 1, 1);
+}
+
+function rect(x, y, w, h, color) {
+  bctx.fillStyle = color;
+  bctx.fillRect(x, y, w, h);
+}
+
+// ── Tile Renderers ───────────────────────────────────────────────
+function drawGrass(tx, ty) {
+  const x = tx * TILE, y = ty * TILE;
+  rect(x, y, TILE, TILE, C.grass1);
+  // Texture variation
+  for (let i = 0; i < 6; i++) {
+    const gx = x + ((tx * 7 + i * 13) % 14);
+    const gy = y + ((ty * 11 + i * 7) % 14);
+    px(gx, gy, C.grass2);
+    px(gx + 1, gy, C.grass2);
+  }
+}
+
+function drawDirt(tx, ty) {
+  const x = tx * TILE, y = ty * TILE;
+  rect(x, y, TILE, TILE, C.dirt);
+  for (let i = 0; i < 4; i++) {
+    const dx = x + ((tx * 5 + i * 9) % 14);
+    const dy = y + ((ty * 7 + i * 11) % 14);
+    px(dx, dy, '#7a4a1b');
+    px(dx + 1, dy + 1, '#9a6a3b');
+  }
+}
+
+function drawWater(tx, ty) {
+  const x = tx * TILE, y = ty * TILE;
+  rect(x, y, TILE, TILE, C.water);
+  const wave = Math.sin(frameCount * 0.05 + tx * 2) * 2;
+  for (let i = 0; i < 3; i++) {
+    const wx = x + 2 + i * 5;
+    const wy = y + 4 + Math.floor(wave) + i * 3;
+    rect(wx, wy, 3, 1, C.waterLight);
+  }
+}
+
+function drawTree(tx, ty) {
+  const x = tx * TILE, y = ty * TILE;
+  drawGrass(tx, ty);
+  // Trunk
+  rect(x + 6, y + 9, 4, 7, C.treeTrunk);
+  rect(x + 7, y + 10, 2, 5, '#7a5430');
+  // Leaves (round-ish canopy)
+  rect(x + 2, y + 1, 12, 9, C.treeLeaf1);
+  rect(x + 4, y + 0, 8, 11, C.treeLeaf1);
+  rect(x + 1, y + 3, 14, 5, C.treeLeaf1);
+  // Highlights
+  rect(x + 4, y + 2, 3, 2, C.treeLeaf2);
+  rect(x + 9, y + 4, 3, 2, C.treeLeaf2);
+  rect(x + 5, y + 6, 2, 2, C.treeLeaf2);
+}
+
+function drawRock(tx, ty) {
+  const x = tx * TILE, y = ty * TILE;
+  drawGrass(tx, ty);
+  rect(x + 3, y + 6, 10, 8, C.stone);
+  rect(x + 2, y + 8, 12, 5, C.stone);
+  rect(x + 4, y + 5, 8, 2, C.stoneLight);
+  rect(x + 5, y + 10, 3, 2, C.stoneDark);
+}
+
+function drawStoneWall(tx, ty) {
+  const x = tx * TILE, y = ty * TILE;
+  rect(x, y, TILE, TILE, C.stone);
+  // Brick pattern
+  for (let row = 0; row < 4; row++) {
+    const ry = y + row * 4;
+    const off = (row % 2) * 4;
+    for (let col = 0; col < 3; col++) {
+      const rx = x + col * 6 + off;
+      rect(rx, ry, 5, 3, C.stoneLight);
+      px(rx, ry + 3, C.stoneDark);
+      rect(rx + 5, ry, 1, 4, C.stoneDark);
+    }
+  }
+}
+
+function drawCaveEntrance(tx, ty) {
+  const x = tx * TILE, y = ty * TILE;
+  if (scene === 'cave') {
+    // In cave: exit is bright
+    rect(x, y, TILE, TILE, C.caveFloor);
+    rect(x + 3, y + 2, 10, 12, C.grass1);
+    rect(x + 5, y + 4, 6, 8, C.sky);
+    // Arrow hint
+    if (Math.floor(frameCount / 20) % 2 === 0) {
+      rect(x + 7, y + 10, 2, 3, C.white);
+      rect(x + 6, y + 12, 4, 1, C.white);
+    }
+  } else {
+    // Overworld: dark cave mouth
+    drawStoneWall(tx, ty);
+    rect(x + 3, y + 3, 10, 13, C.black);
+    rect(x + 5, y + 1, 6, 2, C.black);
+    // Arch
+    rect(x + 2, y + 3, 1, 13, C.stoneDark);
+    rect(x + 13, y + 3, 1, 13, C.stoneDark);
+    rect(x + 3, y + 2, 10, 1, C.stoneDark);
+    rect(x + 5, y + 1, 6, 1, C.stoneDark);
+  }
+}
+
+function drawCaveFloor(tx, ty) {
+  const x = tx * TILE, y = ty * TILE;
+  rect(x, y, TILE, TILE, C.caveFloor);
+  for (let i = 0; i < 3; i++) {
+    const dx = x + ((tx * 3 + i * 7) % 13);
+    const dy = y + ((ty * 5 + i * 11) % 13);
+    px(dx, dy, '#4d4d6c');
+    px(dx + 1, dy, '#35355a');
+  }
+}
+
+function drawCaveWall(tx, ty) {
+  const x = tx * TILE, y = ty * TILE;
+  rect(x, y, TILE, TILE, C.caveWall);
+  for (let i = 0; i < 5; i++) {
+    const dx = x + ((tx * 7 + i * 5) % 14);
+    const dy = y + ((ty * 3 + i * 9) % 14);
+    px(dx, dy, '#1e1e38');
+    px(dx + 1, dy + 1, '#363658');
+  }
+}
+
+function drawSwordPedestal(tx, ty) {
+  const x = tx * TILE, y = ty * TILE;
+  drawCaveFloor(tx, ty);
+
+  if (!swordCollected) {
+    // Pedestal base
+    rect(x + 4, y + 11, 8, 4, C.stone);
+    rect(x + 3, y + 13, 10, 2, C.stone);
+    rect(x + 5, y + 10, 6, 1, C.stoneLight);
+
+    // Sword
+    // Blade
+    rect(x + 7, y + 2, 2, 8, C.swordBlade);
+    px(x + 7, y + 1, C.swordBlade);
+    px(x + 8, y + 1, C.swordBlade);
+    // Blade highlight
+    rect(x + 7, y + 2, 1, 7, '#eeeeff');
+    // Hilt
+    rect(x + 5, y + 9, 6, 1, C.swordHilt);
+    rect(x + 6, y + 8, 4, 1, C.swordHilt);
+    // Grip
+    rect(x + 7, y + 10, 2, 2, '#8a6a2c');
+
+    // Glow effect
+    if (Math.floor(frameCount / 15) % 2 === 0) {
+      bctx.globalAlpha = 0.3;
+      rect(x + 4, y + 0, 8, 12, C.swordGlow);
+      bctx.globalAlpha = 0.15;
+      rect(x + 2, y + 0, 12, 14, C.swordGlow);
+      bctx.globalAlpha = 1;
+    }
+  }
+}
+
+function drawTile(tx, ty) {
+  const map = currentMap();
+  const t = map[ty][tx];
+  switch (t) {
+    case 0: drawGrass(tx, ty); break;
+    case 1: drawDirt(tx, ty); break;
+    case 2: drawWater(tx, ty); break;
+    case 3: drawTree(tx, ty); break;
+    case 4: drawStoneWall(tx, ty); break;
+    case 5: drawCaveEntrance(tx, ty); break;
+    case 6: drawCaveFloor(tx, ty); break;
+    case 7: drawCaveWall(tx, ty); break;
+    case 8: drawSwordPedestal(tx, ty); break;
+    case 9: drawRock(tx, ty); break;
+  }
+}
+
+// ── Player Renderer ──────────────────────────────────────────────
+function drawPlayer() {
+  const x = player.x * TILE;
+  const y = player.y * TILE;
+  const bobY = player.moving ? Math.floor(Math.sin(frameCount * 0.3) * 1) : 0;
+
+  // Shadow
+  bctx.globalAlpha = 0.3;
+  rect(x + 3, y + 14, 10, 2, '#000');
+  bctx.globalAlpha = 1;
+
+  const legOff = player.moving ? Math.floor(Math.sin(frameCount * 0.35) * 2) : 0;
+
+  if (player.dir === 'down' || player.dir === 'up') {
+    // Boots
+    rect(x + 4, y + 13 + bobY, 3, 2, C.boots);
+    rect(x + 9, y + 13 + bobY, 3, 2, C.boots);
+    // Pants
+    rect(x + 4, y + 11 + bobY + legOff, 3, 3, C.pants);
+    rect(x + 9, y + 11 + bobY - legOff, 3, 3, C.pants);
+    // Belt
+    rect(x + 4, y + 10 + bobY, 8, 1, '#4a3a1a');
+    // Shirt
+    rect(x + 3, y + 5 + bobY, 10, 6, C.shirt);
+    rect(x + 5, y + 4 + bobY, 6, 2, C.shirt);
+    // Shirt detail
+    rect(x + 7, y + 6 + bobY, 2, 3, '#2a6ebf');
+    // Head
+    rect(x + 4, y + 0 + bobY, 8, 5, C.skin);
+    if (player.dir === 'down') {
+      // Eyes
+      rect(x + 5, y + 2 + bobY, 2, 2, '#fff');
+      rect(x + 9, y + 2 + bobY, 2, 2, '#fff');
+      px(x + 6, y + 3 + bobY, '#222');
+      px(x + 10, y + 3 + bobY, '#222');
+      // Mouth
+      rect(x + 7, y + 4 + bobY, 2, 1, '#d4a483');
+    }
+    // Hair
+    rect(x + 3, y + 0 + bobY, 10, 2, C.hair);
+    rect(x + 3, y + 2 + bobY, 1, 2, C.hair);
+    rect(x + 12, y + 2 + bobY, 1, 2, C.hair);
+  } else {
+    // Side view
+    const flip = player.dir === 'left';
+    const ox = flip ? 2 : 0;
+    // Boots
+    rect(x + 5 + ox, y + 13 + bobY + legOff, 3, 2, C.boots);
+    rect(x + 8 + ox, y + 13 + bobY - legOff, 3, 2, C.boots);
+    // Pants
+    rect(x + 5 + ox, y + 11 + bobY + legOff, 3, 3, C.pants);
+    rect(x + 8 + ox, y + 11 + bobY - legOff, 3, 3, C.pants);
+    // Belt
+    rect(x + 4 + ox, y + 10 + bobY, 8, 1, '#4a3a1a');
+    // Shirt
+    rect(x + 4 + ox, y + 5 + bobY, 8, 6, C.shirt);
+    // Arm
+    const armOff = player.moving ? Math.floor(Math.sin(frameCount * 0.35) * 2) : 0;
+    rect(x + (flip ? 10 : 2) + ox, y + 6 + bobY + armOff, 2, 5, C.shirt);
+    rect(x + (flip ? 10 : 2) + ox, y + 10 + bobY + armOff, 2, 2, C.skin);
+    // Head
+    rect(x + 4 + ox, y + 0 + bobY, 8, 5, C.skin);
+    // Eye
+    const eyeX = flip ? x + 4 + ox : x + 10 + ox;
+    rect(eyeX, y + 2 + bobY, 2, 2, '#fff');
+    px(eyeX + (flip ? 0 : 1), y + 3 + bobY, '#222');
+    // Hair
+    rect(x + 3 + ox, y + 0 + bobY, 10, 2, C.hair);
+    rect(x + (flip ? 11 : 3) + ox, y + 2 + bobY, 2, 2, C.hair);
+  }
+
+  // Draw sword on player if collected
+  if (swordCollected && scene !== 'win') {
+    const sx = player.dir === 'left' ? x - 2 : x + 12;
+    rect(sx, y + 2 + bobY, 2, 8, C.swordBlade);
+    rect(sx - 1, y + 9 + bobY, 4, 1, C.swordHilt);
+    rect(sx, y + 10 + bobY, 2, 2, '#8a6a2c');
+  }
+}
+
+// ── Scene Renderers ──────────────────────────────────────────────
+function drawTitle() {
+  rect(0, 0, W, H, C.black);
+
+  // Starfield
+  for (let i = 0; i < 40; i++) {
+    const sx = (i * 137 + Math.floor(frameCount * 0.1)) % W;
+    const sy = (i * 97) % H;
+    const bright = (i * 43) % 3 === 0;
+    px(sx, sy, bright ? '#ffffff' : '#888888');
+  }
+
+  // Cave silhouette
+  rect(60, 140, 200, 100, C.stoneDark);
+  rect(80, 120, 160, 30, C.stoneDark);
+  rect(100, 110, 120, 15, C.stoneDark);
+  rect(130, 155, 60, 85, C.black);
+  rect(140, 140, 40, 20, C.black);
+
+  // Sword in the cave
+  const sGlow = Math.sin(frameCount * 0.06) * 0.3 + 0.5;
+  bctx.globalAlpha = sGlow;
+  rect(148, 160, 24, 30, C.swordGlow);
+  bctx.globalAlpha = 1;
+  rect(158, 165, 4, 20, C.swordBlade);
+  rect(154, 183, 12, 3, C.swordHilt);
+  rect(157, 185, 6, 5, '#8a6a2c');
+
+  // Title text
+  bctx.fillStyle = C.gold;
+  bctx.font = 'bold 16px monospace';
+  bctx.textAlign = 'center';
+  bctx.fillText('CAVE OF THE', W / 2, 35);
+  bctx.font = 'bold 22px monospace';
+  bctx.fillText('LOST SWORD', W / 2, 60);
+
+  // Blink
+  titleBlink++;
+  if (titleBlink % 60 < 40) {
+    bctx.fillStyle = C.white;
+    bctx.font = '10px monospace';
+    bctx.fillText('PRESS ENTER TO START', W / 2, 100);
+  }
+
+  bctx.textAlign = 'left';
+}
+
+function drawOverworld() {
+  for (let y = 0; y < ROWS; y++)
+    for (let x = 0; x < COLS; x++)
+      drawTile(x, y);
+  drawPlayer();
+
+  // HUD hint near cave
+  const dx = Math.abs(player.x - 9);
+  const dy = Math.abs(player.y - 9);
+  if (dx < 4 && dy < 3) {
+    bctx.globalAlpha = 0.85;
+    rect(100, 8, 120, 14, '#000');
+    bctx.globalAlpha = 1;
+    bctx.fillStyle = C.white;
+    bctx.font = '8px monospace';
+    bctx.textAlign = 'center';
+    bctx.fillText('Enter the cave...', W / 2, 18);
+    bctx.textAlign = 'left';
+  }
+}
+
+function drawCave() {
+  // Dark background
+  rect(0, 0, W, H, C.caveBg);
+  for (let y = 0; y < ROWS; y++)
+    for (let x = 0; x < COLS; x++)
+      drawTile(x, y);
+
+  // Ambient particles
+  for (let i = 0; i < 8; i++) {
+    const px_ = (i * 97 + frameCount) % W;
+    const py_ = (i * 61 + frameCount * 0.5) % H;
+    bctx.globalAlpha = 0.25;
+    px(px_, py_, '#aaaacc');
+    bctx.globalAlpha = 1;
+  }
+
+  drawPlayer();
+
+  // Hint near sword
+  if (!swordCollected) {
+    const dx = Math.abs(player.x - 9);
+    const dy = Math.abs(player.y - 6);
+    if (dx < 3 && dy < 3) {
+      bctx.globalAlpha = 0.85;
+      rect(90, 8, 140, 14, '#000');
+      bctx.globalAlpha = 1;
+      bctx.fillStyle = C.swordGlow;
+      bctx.font = '8px monospace';
+      bctx.textAlign = 'center';
+      bctx.fillText('The legendary sword!', W / 2, 18);
+      bctx.textAlign = 'left';
+    }
+  }
+}
+
+function drawWin() {
+  winTimer++;
+  rect(0, 0, W, H, C.black);
+
+  // Particles
+  for (let i = 0; i < 30; i++) {
+    const angle = (i / 30) * Math.PI * 2 + frameCount * 0.02;
+    const dist  = 40 + Math.sin(frameCount * 0.03 + i) * 20 + Math.min(winTimer, 60);
+    const px_ = W / 2 + Math.cos(angle) * dist;
+    const py_ = H / 2 + Math.sin(angle) * dist * 0.6;
+    const colors = [C.swordGlow, C.gold, C.white, C.swordBlade];
+    px(Math.floor(px_), Math.floor(py_), colors[i % colors.length]);
+    px(Math.floor(px_) + 1, Math.floor(py_), colors[i % colors.length]);
+  }
+
+  // Big sword
+  const swordY = Math.max(60, 120 - winTimer * 2);
+  rect(W / 2 - 3, swordY, 6, 40, C.swordBlade);
+  rect(W / 2 - 4, swordY, 2, 35, '#eeeeff');
+  rect(W / 2 - 1, swordY - 6, 2, 8, C.swordBlade);
+  rect(W / 2 - 8, swordY + 38, 16, 4, C.swordHilt);
+  rect(W / 2 - 2, swordY + 42, 4, 8, '#8a6a2c');
+
+  // Glow around sword
+  const glowAlpha = 0.2 + Math.sin(frameCount * 0.08) * 0.15;
+  bctx.globalAlpha = glowAlpha;
+  rect(W / 2 - 20, swordY - 10, 40, 70, C.swordGlow);
+  bctx.globalAlpha = glowAlpha * 0.5;
+  rect(W / 2 - 35, swordY - 15, 70, 80, C.swordGlow);
+  bctx.globalAlpha = 1;
+
+  // Text
+  if (winTimer > 30) {
+    bctx.fillStyle = C.gold;
+    bctx.font = 'bold 18px monospace';
+    bctx.textAlign = 'center';
+    bctx.fillText('SWORD OBTAINED!', W / 2, 30);
+
+    if (winTimer > 80) {
+      bctx.fillStyle = C.white;
+      bctx.font = '10px monospace';
+      bctx.fillText('You found the legendary blade.', W / 2, H - 50);
+      bctx.fillText('The darkness shall tremble.', W / 2, H - 35);
+    }
+    if (winTimer > 140) {
+      bctx.fillStyle = C.swordGlow;
+      bctx.font = '9px monospace';
+      bctx.fillText('PRESS ENTER TO PLAY AGAIN', W / 2, H - 10);
+    }
+    bctx.textAlign = 'left';
+  }
+}
+
+// ── Scene Transitions ────────────────────────────────────────────
+function startTransition(target, spawnX, spawnY) {
+  transitioning = true;
+  transitionTarget = target;
+  transitionSpawnX = spawnX;
+  transitionSpawnY = spawnY;
+  transitionAlpha = 0;
+}
+
+function updateTransition() {
+  if (!transitioning) return;
+
+  transitionAlpha += 0.05;
+  if (transitionAlpha >= 1 && scene !== transitionTarget) {
+    scene = transitionTarget;
+    player.x = transitionSpawnX;
+    player.y = transitionSpawnY;
+  }
+  if (transitionAlpha >= 2) {
+    transitioning = false;
+    transitionAlpha = 0;
+  }
+}
+
+function drawTransition() {
+  if (!transitioning) return;
+  const alpha = transitionAlpha <= 1 ? transitionAlpha : 2 - transitionAlpha;
+  bctx.globalAlpha = alpha;
+  rect(0, 0, W, H, '#000');
+  bctx.globalAlpha = 1;
+}
+
+// ── Update Logic ─────────────────────────────────────────────────
+function updateTitle() {
+  if (keys['Enter']) {
+    scene = 'overworld';
+    player = { x: 9, y: 12, dir: 'up', frame: 0, moving: false };
+    swordCollected = false;
+    winTimer = 0;
+    keys['Enter'] = false;
+    ui.textContent = 'Arrow Keys / WASD to move';
+  }
+}
+
+function movePlayer() {
+  if (transitioning) return;
+  const dir = inputDir();
+  player.moving = false;
+
+  if (dir) {
+    player.dir = dir;
+    let nx = player.x;
+    let ny = player.y;
+
+    animTimer++;
+    if (animTimer >= 8) {
+      animTimer = 0;
+      if (dir === 'up')    ny--;
+      if (dir === 'down')  ny++;
+      if (dir === 'left')  nx--;
+      if (dir === 'right') nx++;
+
+      // Check tile interactions before collision
+      const map = currentMap();
+      if (ny >= 0 && ny < ROWS && nx >= 0 && nx < COLS) {
+        const targetTile = map[ny][nx];
+
+        // Cave entrance
+        if (targetTile === 5) {
+          if (scene === 'overworld') {
+            startTransition('cave', 9, 13);
+            ui.textContent = 'Find the sword!';
+            return;
+          } else if (scene === 'cave') {
+            startTransition('overworld', 9, 10);
+            ui.textContent = swordCollected ? 'You have the sword!' : 'Arrow Keys / WASD to move';
+            return;
+          }
+        }
+
+        // Sword pedestal
+        if (targetTile === 8 && !swordCollected) {
+          swordCollected = true;
+          scene = 'win';
+          winTimer = 0;
+          ui.textContent = 'Victory!';
+          return;
+        }
+      }
+
+      if (!isSolid(nx, ny)) {
+        player.x = nx;
+        player.y = ny;
+      }
+    }
+    player.moving = true;
+  } else {
+    animTimer = 6; // allow quick next move
+  }
+}
+
+// ── Main Loop ────────────────────────────────────────────────────
+function gameLoop() {
+  frameCount++;
+
+  // Update
+  switch (scene) {
+    case 'title':
+      updateTitle();
+      break;
+    case 'overworld':
+    case 'cave':
+      movePlayer();
+      updateTransition();
+      break;
+    case 'win':
+      winTimer++;
+      if (winTimer > 140 && keys['Enter']) {
+        scene = 'title';
+        keys['Enter'] = false;
+        ui.textContent = 'Arrow Keys / WASD to move';
+      }
+      break;
+  }
+
+  // Draw to buffer
+  bctx.clearRect(0, 0, W, H);
+  switch (scene) {
+    case 'title':     drawTitle(); break;
+    case 'overworld': drawOverworld(); break;
+    case 'cave':      drawCave(); break;
+    case 'win':       drawWin(); break;
+  }
+  drawTransition();
+
+  // Scale buffer to screen
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(buf, 0, 0, canvas.width, canvas.height);
+
+  requestAnimationFrame(gameLoop);
+}
+
+// ── Start ────────────────────────────────────────────────────────
+scene = 'title';
+gameLoop();
+  </script>
+</body>
+</html>
